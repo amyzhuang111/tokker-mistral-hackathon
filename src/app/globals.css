@@ -1,18 +1,73 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0a0a0a;
-  --foreground: #ededed;
+  --background: #000000;
+  --foreground: #ffffff;
+  --brand-primary: #FE2C55;
+  --brand-secondary: #25F4EE;
+  --brand-glow: rgba(254, 44, 85, 0.15);
+  --surface-1: #121212;
+  --surface-2: #1E1E1E;
+  --text-secondary: #A0A0A0;
+  --text-tertiary: #5A5A5A;
+  --success: #00DC82;
+  --warning: #FFB800;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --color-brand: var(--brand-primary);
+  --color-brand-cyan: var(--brand-secondary);
+  --color-brand-glow: var(--brand-glow);
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-muted: var(--text-secondary);
+  --color-subtle: var(--text-tertiary);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --font-sans: var(--font-jakarta);
   --font-mono: var(--font-geist-mono);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
+}
+
+/* Gradient mesh background for login/home */
+.gradient-mesh {
+  background:
+    radial-gradient(ellipse 80% 60% at 30% 20%, rgba(254, 44, 85, 0.08) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 80% at 70% 80%, rgba(37, 244, 238, 0.06) 0%, transparent 60%),
+    var(--background);
+}
+
+/* Fit score ring */
+.score-ring {
+  --score-pct: 0;
+  background: conic-gradient(
+    var(--ring-color, var(--brand-primary)) calc(var(--score-pct) * 1%),
+    rgba(255, 255, 255, 0.08) 0
+  );
+}
+
+/* Skeleton loader pulse */
+@keyframes skeleton {
+  0%, 100% { opacity: 0.05; }
+  50% { opacity: 0.12; }
+}
+.skeleton {
+  animation: skeleton 1.5s ease-in-out infinite;
+  background: linear-gradient(90deg, var(--surface-1), var(--surface-2), var(--surface-1));
+  background-size: 200% 100%;
+}
+
+/* Smooth page transitions */
+.page-enter {
+  animation: fadeSlideIn 0.3s ease-out;
+}
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }

@@ -1,6 +1,16 @@
 "use client";
 
 import { useState } from "react";
+import { motion } from "framer-motion";
+import {
+  ChevronDown,
+  ChevronUp,
+  Copy,
+  Check,
+  Mail,
+  ExternalLink,
+} from "lucide-react";
+import { toast } from "sonner";
 
 export interface Brand {
   name: string;
@@ -28,139 +38,256 @@ export interface BrandStrategy {
 interface BrandCardProps {
   brand: Brand;
   strategy?: BrandStrategy;
+  index?: number;
 }
 
-export default function BrandCard({ brand, strategy }: BrandCardProps) {
-  const [showFullPitch, setShowFullPitch] = useState(false);
+function ScoreRing({ score }: { score: number }) {
+  const color =
+    score >= 80
+      ? "text-success"
+      : score >= 60
+        ? "text-warning"
+        : "text-muted";
 
-  const scoreColor =
-    brand.fitScore >= 80
-      ? "text-green-400"
-      : brand.fitScore >= 60
-        ? "text-yellow-400"
-        : "text-zinc-400";
+  const strokeColor =
+    score >= 80 ? "#00DC82" : score >= 60 ? "#FFB800" : "#5A5A5A";
+
+  const circumference = 2 * Math.PI * 18;
+  const offset = circumference - (score / 100) * circumference;
 
   return (
-    <div className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-6 transition hover:border-violet-600/50">
-      {/* Header */}
-      <div className="mb-4 flex items-start justify-between">
-        <div>
-          <h3 className="text-xl font-bold text-white">{brand.name}</h3>
-          <p className="text-sm text-zinc-500">{brand.domain}</p>
+    <div className="relative flex h-12 w-12 items-center justify-center">
+      <svg className="h-12 w-12 -rotate-90" viewBox="0 0 40 40">
+        <circle
+          cx="20"
+          cy="20"
+          r="18"
+          fill="none"
+          stroke="rgba(255,255,255,0.06)"
+          strokeWidth="3"
+        />
+        <motion.circle
+          cx="20"
+          cy="20"
+          r="18"
+          fill="none"
+          stroke={strokeColor}
+          strokeWidth="3"
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          initial={{ strokeDashoffset: circumference }}
+          animate={{ strokeDashoffset: offset }}
+          transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
+        />
+      </svg>
+      <span className={`absolute text-sm font-bold ${color}`}>{score}</span>
+    </div>
+  );
+}
+
+export default function BrandCard({
+  brand,
+  strategy,
+  index = 0,
+}: BrandCardProps) {
+  const [expanded, setExpanded] = useState(false);
+  const [showPitch, setShowPitch] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  function handleCopy() {
+    if (!strategy) return;
+    navigator.clipboard.writeText(strategy.pitchScript);
+    setCopied(true);
+    toast.success("Pitch copied — go get that bag");
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  function handleSendEmail() {
+    if (!strategy) return;
+    const subject = encodeURIComponent(strategy.subjectLine);
+    const body = encodeURIComponent(strategy.pitchScript);
+    window.open(`mailto:?subject=${subject}&body=${body}`);
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, delay: index * 0.08 }}
+      className="group rounded-2xl border border-white/[0.06] bg-surface-1 p-5 transition hover:border-brand/30"
+    >
+      {/* Header row: favicon + name + score ring */}
+      <div className="mb-3 flex items-center gap-3">
+        <img
+          src={`https://www.google.com/s2/favicons?domain=${brand.domain}&sz=64`}
+          alt=""
+          className="h-10 w-10 rounded-lg bg-surface-2 p-1"
+          onError={(e) => {
+            (e.target as HTMLImageElement).style.display = "none";
+          }}
+        />
+        <div className="flex-1 min-w-0">
+          <h3 className="truncate text-base font-bold text-white">
+            {brand.name}
+          </h3>
+          <p className="text-xs text-muted">{brand.industry}</p>
         </div>
-        <div className="text-right">
-          <span className={`text-2xl font-bold ${scoreColor}`}>
-            {brand.fitScore}
-          </span>
-          <p className="text-xs text-zinc-500">fit score</p>
-        </div>
+        <ScoreRing score={brand.fitScore} />
       </div>
 
-      <p className="mb-4 text-sm text-zinc-400">{brand.description}</p>
+      {/* Fit reason — one-liner */}
+      <p className="mb-3 text-sm leading-relaxed text-white/70">
+        {brand.fitReason}
+      </p>
 
-      {/* Enrichment data grid */}
-      <div className="mb-4 grid grid-cols-2 gap-3 text-sm">
-        <div className="rounded-lg bg-zinc-800/50 p-3">
-          <p className="text-xs text-zinc-500">Industry</p>
-          <p className="font-medium text-zinc-200">{brand.industry}</p>
-        </div>
-        <div className="rounded-lg bg-zinc-800/50 p-3">
-          <p className="text-xs text-zinc-500">Funding</p>
-          <p className="font-medium text-zinc-200">{brand.funding}</p>
-        </div>
-        <div className="rounded-lg bg-zinc-800/50 p-3">
-          <p className="text-xs text-zinc-500">Headcount</p>
-          <p className="font-medium text-zinc-200">{brand.headcount}</p>
-        </div>
-        <div className="rounded-lg bg-zinc-800/50 p-3">
-          <p className="text-xs text-zinc-500">Recent News</p>
-          <p className="font-medium text-zinc-200">{brand.recentNews}</p>
-        </div>
-      </div>
-
-      {/* Fit reason */}
-      <div className="mb-4 rounded-lg border border-violet-600/30 bg-violet-950/20 p-3">
-        <p className="text-xs text-violet-400">Why this brand fits</p>
-        <p className="text-sm text-zinc-300">{brand.fitReason}</p>
-      </div>
-
-      {/* Strategy section — only shown after Mistral generates it */}
+      {/* Deal value + content formats (only if strategy exists) */}
       {strategy && (
-        <div className="space-y-3 border-t border-zinc-800 pt-4">
-          <h4 className="text-sm font-semibold uppercase tracking-wider text-emerald-400">
-            PR Strategy
-          </h4>
+        <div className="mb-3 space-y-2">
+          <div className="flex items-baseline gap-2">
+            <span className="text-xs text-muted">What you could earn</span>
+            <span className="text-sm font-bold text-success">
+              {strategy.estimatedValue}
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {strategy.contentFormats.map((format) => (
+              <span
+                key={format}
+                className="rounded-full bg-brand/10 px-2.5 py-1 text-xs font-medium text-brand"
+              >
+                {format}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
+      {/* Expandable details */}
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="flex w-full items-center justify-between py-2 text-xs text-muted transition hover:text-white"
+      >
+        <span>{expanded ? "Less details" : "About this brand"}</span>
+        {expanded ? (
+          <ChevronUp className="h-3.5 w-3.5" />
+        ) : (
+          <ChevronDown className="h-3.5 w-3.5" />
+        )}
+      </button>
+
+      {expanded && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: "auto" }}
+          transition={{ duration: 0.2 }}
+          className="space-y-3 overflow-hidden"
+        >
+          <p className="text-sm text-white/60">{brand.description}</p>
+
+          <div className="grid grid-cols-3 gap-2 text-xs">
+            <div className="rounded-lg bg-surface-2 p-2.5">
+              <p className="text-subtle">Funding</p>
+              <p className="font-medium text-white/80">{brand.funding}</p>
+            </div>
+            <div className="rounded-lg bg-surface-2 p-2.5">
+              <p className="text-subtle">Team size</p>
+              <p className="font-medium text-white/80">{brand.headcount}</p>
+            </div>
+            <div className="rounded-lg bg-surface-2 p-2.5">
+              <p className="text-subtle">News</p>
+              <p className="font-medium text-white/80">{brand.recentNews}</p>
+            </div>
+          </div>
+
+          <a
+            href={`https://${brand.domain}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-xs text-brand transition hover:underline"
+          >
+            Visit website <ExternalLink className="h-3 w-3" />
+          </a>
+        </motion.div>
+      )}
+
+      {/* Strategy section */}
+      {strategy && (
+        <div className="mt-3 space-y-3 border-t border-white/[0.04] pt-3">
           {/* Pitch angle */}
           <div>
-            <p className="text-xs text-zinc-500">Pitch Angle</p>
-            <p className="text-sm text-zinc-200">{strategy.pitchAngle}</p>
-          </div>
-
-          {/* Estimated deal value */}
-          <div>
-            <p className="text-xs text-zinc-500">Estimated Deal Value</p>
-            <p className="text-sm font-semibold text-emerald-400">
-              {strategy.estimatedValue}
-            </p>
-          </div>
-
-          {/* Content formats */}
-          <div>
-            <p className="mb-1 text-xs text-zinc-500">Content Formats</p>
-            <div className="flex flex-wrap gap-1">
-              {strategy.contentFormats.map((format) => (
-                <span
-                  key={format}
-                  className="rounded-full bg-emerald-950/50 px-2 py-0.5 text-xs text-emerald-300"
-                >
-                  {format}
-                </span>
-              ))}
-            </div>
+            <p className="text-xs text-subtle">Pitch angle</p>
+            <p className="text-sm text-white/80">{strategy.pitchAngle}</p>
           </div>
 
           {/* Talking points */}
           <div>
-            <p className="mb-1 text-xs text-zinc-500">Talking Points</p>
-            <ul className="list-inside list-disc space-y-1 text-sm text-zinc-300">
+            <p className="mb-1 text-xs text-subtle">What to say</p>
+            <ul className="space-y-1">
               {strategy.talkingPoints.map((point, i) => (
-                <li key={i}>{point}</li>
+                <li
+                  key={i}
+                  className="flex items-start gap-2 text-sm text-white/70"
+                >
+                  <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-brand/50" />
+                  {point}
+                </li>
               ))}
             </ul>
           </div>
 
-          {/* Pitch script */}
-          <div>
-            <div className="mb-1 flex items-center justify-between">
-              <p className="text-xs text-zinc-500">
-                Subject: {strategy.subjectLine}
-              </p>
-              <button
-                onClick={() => setShowFullPitch(!showFullPitch)}
-                className="text-xs text-violet-400 transition hover:text-violet-300"
-              >
-                {showFullPitch ? "Collapse" : "View full pitch"}
-              </button>
-            </div>
-            {showFullPitch && (
-              <div className="rounded-lg bg-zinc-800/70 p-4">
-                <p className="whitespace-pre-wrap text-sm leading-relaxed text-zinc-200">
+          {/* Pitch toggle */}
+          <button
+            onClick={() => setShowPitch(!showPitch)}
+            className="w-full rounded-xl bg-brand/10 py-2.5 text-sm font-semibold text-brand transition hover:bg-brand/15"
+          >
+            {showPitch ? "Hide pitch" : "View full pitch"}
+          </button>
+
+          {showPitch && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="space-y-3"
+            >
+              <div className="rounded-xl bg-surface-2 p-4">
+                <p className="mb-2 text-xs text-subtle">
+                  Subject: {strategy.subjectLine}
+                </p>
+                <p className="whitespace-pre-wrap font-mono text-sm leading-relaxed text-white/80">
                   {strategy.pitchScript}
                 </p>
+              </div>
+
+              {/* Action buttons */}
+              <div className="flex gap-2">
                 <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(strategy.pitchScript);
-                  }}
-                  className="mt-3 rounded-lg bg-zinc-700 px-3 py-1.5 text-xs text-zinc-300 transition hover:bg-zinc-600"
+                  onClick={handleCopy}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-white/[0.06] bg-surface-2 py-2.5 text-sm font-medium text-white transition hover:bg-white/10"
                 >
-                  Copy pitch
+                  {copied ? (
+                    <>
+                      <Check className="h-4 w-4 text-success" />
+                      Copied!
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-4 w-4" />
+                      Copy pitch
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={handleSendEmail}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-brand py-2.5 text-sm font-medium text-white transition hover:bg-brand/90 active:scale-[0.98]"
+                >
+                  <Mail className="h-4 w-4" />
+                  Send pitch
                 </button>
               </div>
-            )}
-          </div>
+            </motion.div>
+          )}
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }
