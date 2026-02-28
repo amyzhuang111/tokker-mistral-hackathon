@@ -40,7 +40,7 @@ export default function CreatorInput({ defaultHandle }: { defaultHandle?: string
     }
 
     setLoading(true);
-    setStatusText("Sending to Clay for enrichment...");
+    setStatusText("Finding your brand matches...");
 
     try {
       const res = await fetch("/api/enrich", {
@@ -58,7 +58,7 @@ export default function CreatorInput({ defaultHandle }: { defaultHandle?: string
 
       // If async, poll for results
       if (data.status === "pending" && data.requestId) {
-        setStatusText("Clay is enriching brand data — this may take a moment...");
+        setStatusText("Analyzing your profile — this may take a moment...");
         data = await pollForResults(data.requestId);
       }
 

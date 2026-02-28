@@ -136,6 +136,99 @@ const tools = [
  *   1. Analyze each brand's fit and generate a personalized pitch
  *   2. Compile an overall PR strategy
  */
+/**
+ * Use Mistral to discover contextually relevant brands for a TikTok creator.
+ * Infers the creator's likely niche from their handle and generates 5 realistic
+ * brand matches — returned in the same shape as Clay enrichment data.
+ */
+export async function discoverBrands(handle: string): Promise<{
+  creator: CreatorProfile;
+  brands: BrandEnrichment[];
+}> {
+  const response = await client.chat.complete({
+    model: MODEL,
+    messages: [
+      {
+        role: "system",
+        content: `You are a brand partnership analyst. Given a TikTok creator's handle, infer their likely niche and audience, then suggest 5 real brands that would be great partnership matches.
+
+Return ONLY valid JSON with this exact structure (no markdown, no code fences):
+{
+  "creator": {
+    "handle": "<handle>",
+    "followers": "<estimated range like 50K-200K>",
+    "niche": "<inferred niche>",
+    "avgViews": "<estimated avg views>",
+    "topContentThemes": ["theme1", "theme2", "theme3"]
+  },
+  "brands": [
+    {
+      "name": "Brand Name",
+      "domain": "brand.com",
+      "industry": "Industry",
+      "description": "What the brand does",
+      "funding": "Funding info or 'Bootstrapped'",
+      "headcount": "Employee range",
+      "recentNews": "Recent relevant news",
+      "fitScore": 85,
+      "fitReason": "Why this creator and brand are a good match"
+    }
+  ]
+}
+
+Rules:
+- Use REAL brands that actually exist — do not invent fictional companies
+- Infer the niche creatively from the handle name (e.g. "fitjenna" → fitness, "chloecooks" → food/cooking)
+- If the handle is ambiguous, pick a plausible niche and go with it
+- Fit scores should range from 70-95 and vary realistically
+- Fit reasons should reference the creator's likely content style and the brand's marketing strategy
+- Include a mix of well-known and emerging brands
+- Make funding, headcount, and news realistic but not necessarily exact`,
+      },
+      {
+        role: "user",
+        content: `TikTok handle: @${handle}`,
+      },
+    ],
+    responseFormat: { type: "json_object" },
+  });
+
+  const content = response.choices?.[0]?.message?.content;
+  if (!content) throw new Error("Mistral returned empty response");
+
+  const parsed = JSON.parse(typeof content === "string" ? content : String(content));
+
+  // Normalize into our expected shapes
+  return {
+    creator: {
+      handle: parsed.creator?.handle ?? handle,
+      followers: parsed.creator?.followers ?? "N/A",
+      niche: parsed.creator?.niche ?? "General",
+      avgViews: parsed.creator?.avgViews ?? "N/A",
+      topContentThemes: parsed.creator?.topContentThemes ?? [],
+    },
+    brands: (parsed.brands ?? []).map((b: Record<string, unknown>) => ({
+      name: String(b.name ?? "Unknown"),
+      domain: String(b.domain ?? ""),
+      industry: String(b.industry ?? ""),
+      description: String(b.description ?? ""),
+      funding: String(b.funding ?? "N/A"),
+      headcount: String(b.headcount ?? "N/A"),
+      recentNews: String(b.recentNews ?? "N/A"),
+      fitScore: Number(b.fitScore ?? 75),
+      fitReason: String(b.fitReason ?? ""),
+    })),
+  };
+}
+
+/**
+ * Run the Mistral orchestrator agent.
+ *
+ * The agent receives the creator profile, Clay enrichment data, and
+ * the marketing request. It uses function calling to:
+ *   1. Analyze each brand's fit and generate a personalized pitch
+ *   2. Compile an overall PR strategy
+ */
 export async function runAgent(
   creator: CreatorProfile,
   brands: BrandEnrichment[],

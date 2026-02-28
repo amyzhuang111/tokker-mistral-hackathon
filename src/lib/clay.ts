@@ -15,6 +15,7 @@
  */
 
 import { randomUUID } from "crypto";
+import { discoverBrands } from "./mistral";
 
 const CLAY_WEBHOOK_URL = process.env.CLAY_WEBHOOK_URL;
 const CLAY_API_KEY = process.env.CLAY_API_KEY;
@@ -94,59 +95,66 @@ export async function triggerClayEnrichment(
   cleanupStore();
 
   if (!CLAY_WEBHOOK_URL) {
-    console.warn("CLAY_WEBHOOK_URL not set — returning mock data");
-    return { mode: "sync", data: getMockEnrichment(input.tiktok_handle) };
+    console.log("CLAY_WEBHOOK_URL not set — using Mistral brand discovery");
+    return mistralFallback(input.tiktok_handle);
   }
 
   const requestId = randomUUID();
   createPendingRequest(requestId);
 
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-  };
-  if (CLAY_API_KEY) {
-    headers["Authorization"] = `Bearer ${CLAY_API_KEY}`;
-  }
-
-  const res = await fetch(CLAY_WEBHOOK_URL, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({
-      request_id: requestId,
-      tiktok_handle: input.tiktok_handle,
-      niche_description: input.niche_description ?? "",
-    }),
-  });
-
-  if (!res.ok) {
-    enrichmentStore.delete(requestId);
-    throw new Error(`Clay webhook returned ${res.status}: ${await res.text()}`);
-  }
-
-  // Some Clay setups return enriched data synchronously in the response
-  const contentType = res.headers.get("content-type") ?? "";
-  if (contentType.includes("application/json")) {
-    try {
-      const responseData = await res.json();
-      // If Clay returned full enrichment data inline, use it directly
-      if (responseData.creator && responseData.brands) {
-        const result = responseData as ClayEnrichmentResult;
-        completeRequest(requestId, result);
-        return { mode: "sync", data: result };
-      }
-      // If Clay returned partial data or just an ack, check for enriched fields
-      if (responseData.brands || responseData.results) {
-        const result = normalizeClayResponse(responseData, input.tiktok_handle);
-        completeRequest(requestId, result);
-        return { mode: "sync", data: result };
-      }
-    } catch {
-      // Response wasn't valid JSON enrichment data — continue with async
+  try {
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+    if (CLAY_API_KEY) {
+      headers["Authorization"] = `Bearer ${CLAY_API_KEY}`;
     }
-  }
 
-  // Async mode: Clay will POST results back to /api/clay-callback
-  return { mode: "async", requestId };
+    const res = await fetch(CLAY_WEBHOOK_URL, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        request_id: requestId,
+        tiktok_handle: input.tiktok_handle,
+        niche_description: input.niche_description ?? "",
+      }),
+    });
+
+    if (!res.ok) {
+      enrichmentStore.delete(requestId);
+      console.warn(`Clay webhook returned ${res.status} — falling back to Mistral`);
+      return mistralFallback(input.tiktok_handle);
+    }
+
+    // Some Clay setups return enriched data synchronously in the response
+    const contentType = res.headers.get("content-type") ?? "";
+    if (contentType.includes("application/json")) {
+      try {
+        const responseData = await res.json();
+        // If Clay returned full enrichment data inline, use it directly
+        if (responseData.creator && responseData.brands) {
+          const result = responseData as ClayEnrichmentResult;
+          completeRequest(requestId, result);
+          return { mode: "sync", data: result };
+        }
+        // If Clay returned partial data or just an ack, check for enriched fields
+        if (responseData.brands || responseData.results) {
+          const result = normalizeClayResponse(responseData, input.tiktok_handle);
+          completeRequest(requestId, result);
+          return { mode: "sync", data: result };
+        }
+      } catch {
+        // Response wasn't valid JSON enrichment data — continue with async
+      }
+    }
+
+    // Async mode: Clay will POST results back to /api/clay-callback
+    return { mode: "async", requestId };
+  } catch (err) {
+    enrichmentStore.delete(requestId);
+    console.warn("Clay webhook failed — falling back to Mistral:", err);
+    return mistralFallback(input.tiktok_handle);
+  }
 }
 
 /**
@@ -181,6 +189,22 @@ export function normalizeClayResponse(raw: any, handle: string): ClayEnrichmentR
     },
     brands,
   };
+}
+
+/**
+ * Fallback: use Mistral to generate contextual brand matches.
+ * If Mistral also fails (e.g., no API key), fall back to hardcoded mock.
+ */
+async function mistralFallback(
+  handle: string
+): Promise<{ mode: "sync"; data: ClayEnrichmentResult }> {
+  try {
+    const result = await discoverBrands(handle);
+    return { mode: "sync", data: result };
+  } catch (err) {
+    console.warn("Mistral brand discovery failed — using hardcoded mock:", err);
+    return { mode: "sync", data: getMockEnrichment(handle) };
+  }
 }
 
 /**
