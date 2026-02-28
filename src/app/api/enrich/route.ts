@@ -13,12 +13,21 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const enrichment = await triggerClayEnrichment({
+    const result = await triggerClayEnrichment({
       tiktok_handle: handle,
       niche_description: body.niche_description,
     });
 
-    return NextResponse.json(enrichment);
+    if (result.mode === "sync") {
+      // Clay returned data immediately (mock data or sync webhook)
+      return NextResponse.json({ status: "complete", ...result.data });
+    }
+
+    // Async mode — client should poll /api/enrich/[requestId]
+    return NextResponse.json({
+      status: "pending",
+      requestId: result.requestId,
+    });
   } catch (err) {
     console.error("Enrichment error:", err);
     return NextResponse.json(

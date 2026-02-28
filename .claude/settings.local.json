@@ -10,7 +10,28 @@
       "WebSearch",
       "WebFetch(domain:docs.privy.io)",
       "Bash(npx tsc:*)",
-      "Bash(lsof:*)"
+      "Bash(lsof:*)",
+      "Bash(cd \"/mnt/c/Users/win/OneDrive/Desktop/Coding Projects/Tokker/tokker-mistral-hackathon\" && npm run dev 2>&1)",
+      "Bash(grep 3000:*)",
+      "Bash(cd \"/mnt/c/Users/win/OneDrive/Desktop/Coding Projects/Tokker/tokker-mistral-hackathon\" && npx next dev --port 3000 2>&1)",
+      "WebFetch(domain:www.clay.com)",
+      "WebFetch(domain:generect.com)",
+      "WebFetch(domain:community.clay.com)",
+      "WebFetch(domain:university.clay.com)",
+      "WebFetch(domain:apitracker.io)",
+      "WebFetch(domain:www.university.clay.com)",
+      "WebFetch(domain:replit.com)",
+      "WebFetch(domain:support.clay.com)",
+      "WebFetch(domain:app.gitbook.com)",
+      "WebFetch(domain:florian-martens.medium.com)",
+      "WebFetch(domain:blog.val.town)",
+      "WebFetch(domain:apps.make.com)",
+      "Bash(cd:*)",
+      "Bash(cd:2)",
+      "Bash(git config:*)",
+      "Bash(which vercel 2>/dev/null || npx vercel --version 2>&1)",
+      "Bash(cd \"/mnt/c/Users/win/OneDrive/Desktop/Coding Projects/Tokker/tokker-mistral-hackathon\" && vercel whoami 2>&1)",
+      "Bash(cd \"/mnt/c/Users/win/OneDrive/Desktop/Coding Projects/Tokker/tokker-mistral-hackathon\" && vercel --prod --yes 2>&1)"
     ]
   }
 }

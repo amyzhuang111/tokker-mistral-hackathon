@@ -2,22 +2,38 @@
  * Clay webhook integration.
  *
  * Clay doesn't have a traditional REST API — it's table-based.
- * Integration path:
- *   1. Push data into a Clay table via its webhook URL
- *   2. Clay runs enrichment columns (100+ data providers)
- *   3. Pull enriched data back via HTTP action or return webhook
+ * Integration flow:
+ *   1. POST creator data to Clay webhook URL → adds a row to the table
+ *   2. Clay runs enrichment columns (100+ data providers) — async
+ *   3. Clay POSTs enriched data back to our callback endpoint (/api/clay-callback)
+ *   4. Frontend polls /api/enrich/[requestId] until results arrive
  *
- * For the hackathon we pre-configure a Clay table with enrichment columns
- * (company funding, headcount, job postings, tech stack) and expose it as
- * a webhook endpoint.
+ * Pre-configure your Clay table with:
+ *   - A Webhook source (gives you the inbound webhook URL)
+ *   - Enrichment columns (company funding, headcount, job postings, tech stack)
+ *   - An HTTP API column that POSTs results back to your server's callback URL
  */
 
+import { randomUUID } from "crypto";
+
 const CLAY_WEBHOOK_URL = process.env.CLAY_WEBHOOK_URL;
+const CLAY_API_KEY = process.env.CLAY_API_KEY;
 
 export interface ClayEnrichmentInput {
   tiktok_handle: string;
-  /** Optional additional context the creator provided */
   niche_description?: string;
+}
+
+export interface ClayBrand {
+  name: string;
+  domain: string;
+  industry: string;
+  description: string;
+  funding: string;
+  headcount: string;
+  recentNews: string;
+  fitScore: number;
+  fitReason: string;
 }
 
 export interface ClayEnrichmentResult {
@@ -28,46 +44,143 @@ export interface ClayEnrichmentResult {
     avgViews: string;
     topContentThemes: string[];
   };
-  brands: Array<{
-    name: string;
-    domain: string;
-    industry: string;
-    description: string;
-    funding: string;
-    headcount: string;
-    recentNews: string;
-    fitScore: number;
-    fitReason: string;
-  }>;
+  brands: ClayBrand[];
+}
+
+/**
+ * In-memory store for async enrichment results.
+ * Keyed by request ID. In production you'd use Redis or a DB.
+ */
+const enrichmentStore = new Map<
+  string,
+  { status: "pending" | "complete"; data?: ClayEnrichmentResult; createdAt: number }
+>();
+
+/** Store a pending request */
+export function createPendingRequest(requestId: string) {
+  enrichmentStore.set(requestId, { status: "pending", createdAt: Date.now() });
+}
+
+/** Store completed enrichment data from Clay callback */
+export function completeRequest(requestId: string, data: ClayEnrichmentResult) {
+  enrichmentStore.set(requestId, { status: "complete", data, createdAt: Date.now() });
+}
+
+/** Get enrichment result by request ID */
+export function getEnrichmentResult(requestId: string) {
+  return enrichmentStore.get(requestId) ?? null;
+}
+
+/** Clean up old entries (older than 30 min) */
+function cleanupStore() {
+  const cutoff = Date.now() - 30 * 60 * 1000;
+  for (const [key, val] of enrichmentStore) {
+    if (val.createdAt < cutoff) enrichmentStore.delete(key);
+  }
 }
 
 /**
  * Trigger Clay enrichment for a TikTok creator.
- * Posts the handle to the Clay webhook and returns enriched data.
+ *
+ * - If CLAY_WEBHOOK_URL is set: POSTs to Clay webhook with a request_id.
+ *   Clay enriches async and POSTs results back to /api/clay-callback.
+ *   Returns { requestId } for polling.
+ *
+ * - If CLAY_WEBHOOK_URL is not set: returns mock data immediately.
  */
 export async function triggerClayEnrichment(
   input: ClayEnrichmentInput
-): Promise<ClayEnrichmentResult> {
+): Promise<{ mode: "async"; requestId: string } | { mode: "sync"; data: ClayEnrichmentResult }> {
+  cleanupStore();
+
   if (!CLAY_WEBHOOK_URL) {
     console.warn("CLAY_WEBHOOK_URL not set — returning mock data");
-    return getMockEnrichment(input.tiktok_handle);
+    return { mode: "sync", data: getMockEnrichment(input.tiktok_handle) };
+  }
+
+  const requestId = randomUUID();
+  createPendingRequest(requestId);
+
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  if (CLAY_API_KEY) {
+    headers["Authorization"] = `Bearer ${CLAY_API_KEY}`;
   }
 
   const res = await fetch(CLAY_WEBHOOK_URL, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers,
     body: JSON.stringify({
+      request_id: requestId,
       tiktok_handle: input.tiktok_handle,
       niche_description: input.niche_description ?? "",
     }),
   });
 
   if (!res.ok) {
+    enrichmentStore.delete(requestId);
     throw new Error(`Clay webhook returned ${res.status}: ${await res.text()}`);
   }
 
-  const data = await res.json();
-  return data as ClayEnrichmentResult;
+  // Some Clay setups return enriched data synchronously in the response
+  const contentType = res.headers.get("content-type") ?? "";
+  if (contentType.includes("application/json")) {
+    try {
+      const responseData = await res.json();
+      // If Clay returned full enrichment data inline, use it directly
+      if (responseData.creator && responseData.brands) {
+        const result = responseData as ClayEnrichmentResult;
+        completeRequest(requestId, result);
+        return { mode: "sync", data: result };
+      }
+      // If Clay returned partial data or just an ack, check for enriched fields
+      if (responseData.brands || responseData.results) {
+        const result = normalizeClayResponse(responseData, input.tiktok_handle);
+        completeRequest(requestId, result);
+        return { mode: "sync", data: result };
+      }
+    } catch {
+      // Response wasn't valid JSON enrichment data — continue with async
+    }
+  }
+
+  // Async mode: Clay will POST results back to /api/clay-callback
+  return { mode: "async", requestId };
+}
+
+/**
+ * Normalize various Clay response shapes into our standard format.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function normalizeClayResponse(raw: any, handle: string): ClayEnrichmentResult {
+  const brands: ClayBrand[] = [];
+  const rawBrands = raw.brands ?? raw.results ?? raw.rows ?? [];
+
+  for (const b of rawBrands) {
+    brands.push({
+      name: b.name ?? b.company_name ?? b.Company ?? "Unknown",
+      domain: b.domain ?? b.website ?? b.Domain ?? "",
+      industry: b.industry ?? b.Industry ?? b.vertical ?? "",
+      description: b.description ?? b.Description ?? b.about ?? "",
+      funding: b.funding ?? b.total_funding ?? b.Funding ?? "N/A",
+      headcount: b.headcount ?? b.employee_count ?? b.Headcount ?? "N/A",
+      recentNews: b.recent_news ?? b.recentNews ?? b.news ?? "N/A",
+      fitScore: Number(b.fit_score ?? b.fitScore ?? b.score ?? 70),
+      fitReason: b.fit_reason ?? b.fitReason ?? b.reason ?? "",
+    });
+  }
+
+  return {
+    creator: {
+      handle,
+      followers: raw.creator?.followers ?? raw.followers ?? "N/A",
+      niche: raw.creator?.niche ?? raw.niche ?? "N/A",
+      avgViews: raw.creator?.avgViews ?? raw.avg_views ?? "N/A",
+      topContentThemes: raw.creator?.topContentThemes ?? raw.themes ?? [],
+    },
+    brands,
+  };
 }
 
 /**
