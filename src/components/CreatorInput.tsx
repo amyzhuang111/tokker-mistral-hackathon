@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-export default function CreatorInput() {
-  const [handle, setHandle] = useState("");
+export default function CreatorInput({ defaultHandle }: { defaultHandle?: string }) {
+  const [handle, setHandle] = useState(defaultHandle ?? "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();

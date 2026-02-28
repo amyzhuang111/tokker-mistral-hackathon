@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { usePrivy } from "@privy-io/react-auth";
 import BrandCard, {
   type Brand,
   type BrandStrategy,
@@ -33,6 +34,14 @@ export default function Dashboard() {
   const [agentLoading, setAgentLoading] = useState(false);
   const [agentError, setAgentError] = useState<string | null>(null);
   const router = useRouter();
+  const { ready, authenticated, user, logout } = usePrivy();
+
+  useEffect(() => {
+    if (ready && !authenticated) {
+      router.push("/login");
+      return;
+    }
+  }, [ready, authenticated, router]);
 
   useEffect(() => {
     const stored = sessionStorage.getItem("tokker_enrichment");
@@ -82,7 +91,7 @@ export default function Dashboard() {
     }
   }
 
-  if (!data) {
+  if (!ready || !authenticated || !data) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <p className="text-zinc-500">Loading...</p>
@@ -103,16 +112,29 @@ export default function Dashboard() {
   return (
     <div className="mx-auto min-h-screen max-w-5xl px-4 py-12">
       {/* Header */}
-      <div className="mb-10">
-        <button
-          onClick={() => router.push("/")}
-          className="mb-2 text-sm text-zinc-500 transition hover:text-white"
-        >
-          &larr; New search
-        </button>
-        <h1 className="text-3xl font-bold text-white">
-          Brand Matches for @{creator.handle}
-        </h1>
+      <div className="mb-10 flex items-start justify-between">
+        <div>
+          <button
+            onClick={() => router.push("/")}
+            className="mb-2 text-sm text-zinc-500 transition hover:text-white"
+          >
+            &larr; New search
+          </button>
+          <h1 className="text-3xl font-bold text-white">
+            Brand Matches for @{creator.handle}
+          </h1>
+        </div>
+        <div className="flex items-center gap-3">
+          {user?.google?.email && (
+            <span className="text-sm text-zinc-400">{user.google.email}</span>
+          )}
+          <button
+            onClick={logout}
+            className="rounded-lg border border-zinc-700 px-3 py-1.5 text-sm text-zinc-400 transition hover:border-zinc-500 hover:text-white"
+          >
+            Log out
+          </button>
+        </div>
       </div>
 
       {/* Creator summary */}
