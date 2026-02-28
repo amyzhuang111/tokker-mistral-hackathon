@@ -2,6 +2,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
+import { ArrowRight, Loader2 } from "lucide-react";
+
+const trendingCreators = ["@fitnessjenna", "@chloecooks", "@alexlifts", "@skincarebymia"];
 
 export default function CreatorInput({ defaultHandle }: { defaultHandle?: string }) {
   const [handle, setHandle] = useState(defaultHandle ?? "");
@@ -15,7 +19,7 @@ export default function CreatorInput({ defaultHandle }: { defaultHandle?: string
 
     const cleaned = handle.trim().replace(/^@/, "");
     if (!cleaned) {
-      setError("Please enter a TikTok handle.");
+      setError("We couldn't find that handle — double check and try again.");
       return;
     }
 
@@ -33,8 +37,6 @@ export default function CreatorInput({ defaultHandle }: { defaultHandle?: string
       }
 
       const data = await res.json();
-
-      // Store enrichment results and navigate to dashboard
       sessionStorage.setItem("tokker_enrichment", JSON.stringify(data));
       router.push("/dashboard");
     } catch (err) {
@@ -45,42 +47,62 @@ export default function CreatorInput({ defaultHandle }: { defaultHandle?: string
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex w-full max-w-md flex-col gap-4">
-      <div className="relative">
-        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 text-lg">
-          @
-        </span>
-        <input
-          type="text"
-          value={handle}
-          onChange={(e) => setHandle(e.target.value)}
-          placeholder="tiktok_handle"
-          className="w-full rounded-xl border border-zinc-700 bg-zinc-900 py-3 pl-10 pr-4 text-lg text-white placeholder-zinc-600 outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-500/30"
-          disabled={loading}
-        />
-      </div>
+    <div className="flex w-full max-w-md flex-col gap-5">
+      <form onSubmit={handleSubmit}>
+        <div className="relative flex items-center">
+          <span className="absolute left-4 text-lg text-muted">@</span>
+          <input
+            type="text"
+            value={handle}
+            onChange={(e) => setHandle(e.target.value)}
+            placeholder="your_tiktok_handle"
+            className="w-full rounded-2xl border border-white/[0.08] bg-surface-1 py-4 pl-10 pr-14 text-base text-white placeholder-subtle outline-none transition focus:border-brand/50 focus:ring-2 focus:ring-brand/20"
+            disabled={loading}
+          />
+          <button
+            type="submit"
+            disabled={loading || !handle.trim()}
+            className="absolute right-2 flex h-10 w-10 items-center justify-center rounded-xl bg-brand text-white transition hover:bg-brand/90 active:scale-95 disabled:opacity-30 disabled:hover:bg-brand"
+          >
+            {loading ? (
+              <Loader2 className="h-5 w-5 animate-spin" />
+            ) : (
+              <ArrowRight className="h-5 w-5" />
+            )}
+          </button>
+        </div>
+      </form>
 
       {error && (
-        <p className="text-sm text-red-400">{error}</p>
+        <motion.p
+          initial={{ opacity: 0, y: -4 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-sm text-brand"
+        >
+          {error}
+        </motion.p>
       )}
 
-      <button
-        type="submit"
-        disabled={loading}
-        className="rounded-xl bg-violet-600 py-3 text-lg font-semibold text-white transition hover:bg-violet-500 disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {loading ? (
-          <span className="flex items-center justify-center gap-2">
-            <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-            </svg>
-            Analyzing creator...
-          </span>
-        ) : (
-          "Find Brand Matches"
-        )}
-      </button>
-    </form>
+      <p className="text-center text-xs text-subtle">
+        or paste a TikTok profile link
+      </p>
+
+      {/* Trending creators */}
+      <div className="flex flex-col items-center gap-2">
+        <p className="text-xs text-muted">Trending on Tokker</p>
+        <div className="flex flex-wrap justify-center gap-2">
+          {trendingCreators.map((creator) => (
+            <button
+              key={creator}
+              type="button"
+              onClick={() => setHandle(creator)}
+              className="rounded-full border border-white/[0.06] bg-surface-1 px-3 py-1.5 text-xs text-white/70 transition hover:border-brand/30 hover:text-white"
+            >
+              {creator}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
   );
 }

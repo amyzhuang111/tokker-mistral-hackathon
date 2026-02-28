@@ -1,8 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
+import { motion, AnimatePresence } from "framer-motion";
+import confetti from "canvas-confetti";
+import {
+  ArrowLeft,
+  LogOut,
+  Sparkles,
+  ChevronDown,
+  ChevronUp,
+  X,
+} from "lucide-react";
 import BrandCard, {
   type Brand,
   type BrandStrategy,
@@ -27,12 +37,17 @@ interface PRStrategyResult {
   brandStrategies: BrandStrategy[];
 }
 
+type SortMode = "all" | "best-fit" | "highest-value";
+
 export default function Dashboard() {
   const [data, setData] = useState<EnrichmentData | null>(null);
   const [strategyResult, setStrategyResult] =
     useState<PRStrategyResult | null>(null);
   const [agentLoading, setAgentLoading] = useState(false);
   const [agentError, setAgentError] = useState<string | null>(null);
+  const [sortMode, setSortMode] = useState<SortMode>("all");
+  const [showStrategy, setShowStrategy] = useState(true);
+  const [hasAnimatedConfetti, setHasAnimatedConfetti] = useState(false);
   const router = useRouter();
   const { ready, authenticated, user, logout } = usePrivy();
 
@@ -51,10 +66,10 @@ export default function Dashboard() {
     }
     setData(JSON.parse(stored));
 
-    // Also restore strategy if it was already generated
     const storedStrategy = sessionStorage.getItem("tokker_strategy");
     if (storedStrategy) {
       setStrategyResult(JSON.parse(storedStrategy));
+      setHasAnimatedConfetti(true); // Don't re-confetti on reload
     }
   }, [router]);
 
@@ -76,12 +91,23 @@ export default function Dashboard() {
 
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error || "Agent request failed");
+        throw new Error(errData.error || "Something went wrong on our end");
       }
 
       const result: PRStrategyResult = await res.json();
       setStrategyResult(result);
       sessionStorage.setItem("tokker_strategy", JSON.stringify(result));
+
+      // Celebration confetti
+      if (!hasAnimatedConfetti) {
+        setHasAnimatedConfetti(true);
+        confetti({
+          particleCount: 80,
+          spread: 70,
+          origin: { y: 0.6 },
+          colors: ["#FE2C55", "#25F4EE", "#00DC82", "#FFB800"],
+        });
+      }
     } catch (err) {
       setAgentError(
         err instanceof Error ? err.message : "Something went wrong"
@@ -91,126 +117,214 @@ export default function Dashboard() {
     }
   }
 
+  // Sort/filter brands
+  const strategyMap = useMemo(() => {
+    const map = new Map<string, BrandStrategy>();
+    if (strategyResult) {
+      for (const s of strategyResult.brandStrategies) {
+        map.set(s.brandDomain, s);
+      }
+    }
+    return map;
+  }, [strategyResult]);
+
+  const sortedBrands = useMemo(() => {
+    if (!data) return [];
+    const sorted = [...data.brands];
+    if (sortMode === "best-fit") {
+      sorted.sort((a, b) => b.fitScore - a.fitScore);
+    } else if (sortMode === "highest-value") {
+      // Sort by whether strategy exists and estimated value
+      sorted.sort((a, b) => {
+        const aStrat = strategyMap.get(a.domain);
+        const bStrat = strategyMap.get(b.domain);
+        if (aStrat && !bStrat) return -1;
+        if (!aStrat && bStrat) return 1;
+        return b.fitScore - a.fitScore;
+      });
+    }
+    return sorted;
+  }, [data, sortMode, strategyMap]);
+
   if (!ready || !authenticated || !data) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <p className="text-zinc-500">Loading...</p>
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand border-t-transparent" />
       </div>
     );
   }
 
-  const { creator, brands } = data;
-
-  // Map strategies by brand domain for easy lookup
-  const strategyMap = new Map<string, BrandStrategy>();
-  if (strategyResult) {
-    for (const s of strategyResult.brandStrategies) {
-      strategyMap.set(s.brandDomain, s);
-    }
-  }
+  const { creator } = data;
+  const email = user?.google?.email || user?.tiktok?.username;
 
   return (
-    <div className="mx-auto min-h-screen max-w-5xl px-4 py-12">
+    <div className="mx-auto min-h-screen max-w-5xl px-4 py-6">
       {/* Header */}
-      <div className="mb-10 flex items-start justify-between">
-        <div>
+      <div className="mb-6 flex items-center justify-between">
+        <div className="flex items-center gap-3">
           <button
             onClick={() => router.push("/")}
-            className="mb-2 text-sm text-zinc-500 transition hover:text-white"
+            className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/[0.06] bg-surface-1 text-muted transition hover:text-white"
+            aria-label="Go back"
           >
-            &larr; New search
+            <ArrowLeft className="h-4 w-4" />
           </button>
-          <h1 className="text-3xl font-bold text-white">
-            Brand Matches for @{creator.handle}
-          </h1>
+          <div>
+            <h1 className="text-lg font-bold text-white">
+              @{creator.handle}
+            </h1>
+            <p className="text-xs text-muted">
+              {creator.followers} followers &middot; {creator.niche} &middot;{" "}
+              {creator.avgViews} avg views
+            </p>
+          </div>
         </div>
-        <div className="flex items-center gap-3">
-          {user?.google?.email && (
-            <span className="text-sm text-zinc-400">{user.google.email}</span>
+        <div className="flex items-center gap-2">
+          {email && (
+            <span className="hidden text-xs text-subtle sm:block">
+              {email}
+            </span>
           )}
           <button
             onClick={logout}
-            className="rounded-lg border border-zinc-700 px-3 py-1.5 text-sm text-zinc-400 transition hover:border-zinc-500 hover:text-white"
+            className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/[0.06] bg-surface-1 text-muted transition hover:text-white"
+            aria-label="Log out"
           >
-            Log out
+            <LogOut className="h-4 w-4" />
           </button>
         </div>
       </div>
 
-      {/* Creator summary */}
-      <div className="mb-8 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6">
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-violet-400">
-          Creator Profile
-        </h2>
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          <div>
-            <p className="text-xs text-zinc-500">Followers</p>
-            <p className="text-lg font-semibold text-white">
-              {creator.followers}
-            </p>
-          </div>
-          <div>
-            <p className="text-xs text-zinc-500">Niche</p>
-            <p className="text-lg font-semibold text-white">{creator.niche}</p>
-          </div>
-          <div>
-            <p className="text-xs text-zinc-500">Avg Views</p>
-            <p className="text-lg font-semibold text-white">
-              {creator.avgViews}
-            </p>
-          </div>
-          <div>
-            <p className="text-xs text-zinc-500">Top Themes</p>
-            <div className="flex flex-wrap gap-1">
-              {creator.topContentThemes.map((theme) => (
-                <span
-                  key={theme}
-                  className="rounded-full bg-violet-950/50 px-2 py-0.5 text-xs text-violet-300"
-                >
-                  {theme}
-                </span>
-              ))}
-            </div>
-          </div>
-        </div>
+      {/* Creator themes as inline tags */}
+      <div className="mb-6 flex flex-wrap gap-1.5">
+        {creator.topContentThemes.map((theme) => (
+          <span
+            key={theme}
+            className="rounded-full bg-brand/10 px-3 py-1 text-xs font-medium text-brand"
+          >
+            {theme}
+          </span>
+        ))}
       </div>
 
-      {/* Marketing request input */}
-      <div className="mb-8 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6">
+      {/* Marketing request */}
+      <div className="mb-6 rounded-2xl border border-white/[0.06] bg-surface-1 p-5">
         <MarketingRequest
           onSubmit={handleMarketingRequest}
           loading={agentLoading}
         />
         {agentError && (
-          <p className="mt-3 text-sm text-red-400">{agentError}</p>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="mt-3 flex items-center gap-2 rounded-xl bg-brand/10 p-3"
+          >
+            <p className="flex-1 text-sm text-brand">{agentError}</p>
+            <button
+              onClick={() => setAgentError(null)}
+              className="text-brand/60 hover:text-brand"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </motion.div>
         )}
       </div>
 
-      {/* Overall strategy (shown after Mistral generates it) */}
-      {strategyResult && (
-        <div className="mb-8 rounded-2xl border border-emerald-800/50 bg-emerald-950/20 p-6">
-          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-emerald-400">
-            Overall PR Strategy
-          </h2>
-          <p className="whitespace-pre-wrap text-sm leading-relaxed text-zinc-300">
-            {strategyResult.overallStrategy}
-          </p>
-        </div>
+      {/* Overall strategy banner */}
+      <AnimatePresence>
+        {strategyResult && showStrategy && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, height: 0 }}
+            className="mb-6 rounded-2xl border border-success/20 bg-success/5 p-5"
+          >
+            <div className="mb-2 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-success" />
+                <h2 className="text-sm font-bold text-success">
+                  Your game plan
+                </h2>
+              </div>
+              <button
+                onClick={() => setShowStrategy(false)}
+                className="text-success/40 transition hover:text-success"
+              >
+                <ChevronUp className="h-4 w-4" />
+              </button>
+            </div>
+            <p className="whitespace-pre-wrap text-sm leading-relaxed text-white/70">
+              {strategyResult.overallStrategy}
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Collapsed strategy toggle */}
+      {strategyResult && !showStrategy && (
+        <button
+          onClick={() => setShowStrategy(true)}
+          className="mb-6 flex items-center gap-2 text-xs text-success transition hover:text-success/80"
+        >
+          <Sparkles className="h-3 w-3" />
+          Show your game plan
+          <ChevronDown className="h-3 w-3" />
+        </button>
       )}
 
-      {/* Brand cards */}
-      <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-zinc-500">
-        {brands.length} Brand{brands.length !== 1 && "s"} Found
-      </h2>
-      <div className="grid gap-6 md:grid-cols-2">
-        {brands.map((brand) => (
+      {/* Brand cards header with filter tabs */}
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="text-sm font-bold text-white">
+          {sortedBrands.length} brand
+          {sortedBrands.length !== 1 && "s"} found
+        </h2>
+        <div className="flex gap-1 rounded-xl bg-surface-1 p-1">
+          {(
+            [
+              ["all", "All"],
+              ["best-fit", "Best fit"],
+              ["highest-value", "Top value"],
+            ] as const
+          ).map(([mode, label]) => (
+            <button
+              key={mode}
+              onClick={() => setSortMode(mode)}
+              className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
+                sortMode === mode
+                  ? "bg-brand/15 text-brand"
+                  : "text-muted hover:text-white"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Brand cards grid */}
+      <div className="grid gap-4 md:grid-cols-2">
+        {sortedBrands.map((brand, i) => (
           <BrandCard
             key={brand.domain}
             brand={brand}
             strategy={strategyMap.get(brand.domain)}
+            index={i}
           />
         ))}
       </div>
+
+      {/* Empty state for no brands */}
+      {sortedBrands.length === 0 && (
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <p className="text-lg font-semibold text-white">
+            No matches yet
+          </p>
+          <p className="mt-1 text-sm text-muted">
+            Try a different niche or check back soon — we&apos;re always adding
+            new brands.
+          </p>
+        </div>
+      )}
     </div>
   );
 }
