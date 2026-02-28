@@ -48,8 +48,11 @@ export default function Dashboard() {
   const [sortMode, setSortMode] = useState<SortMode>("all");
   const [showStrategy, setShowStrategy] = useState(true);
   const [hasAnimatedConfetti, setHasAnimatedConfetti] = useState(false);
+  const [enriching, setEnriching] = useState(false);
   const router = useRouter();
   const { ready, authenticated, user, logout } = usePrivy();
+
+  const tiktokHandle = user?.tiktok?.username;
 
   useEffect(() => {
     if (ready && !authenticated) {
@@ -59,19 +62,49 @@ export default function Dashboard() {
   }, [ready, authenticated, router]);
 
   useEffect(() => {
+    if (!ready || !authenticated) return;
+
     const stored = sessionStorage.getItem("tokker_enrichment");
-    if (!stored) {
-      router.push("/");
+    if (stored) {
+      setData(JSON.parse(stored));
+      const storedStrategy = sessionStorage.getItem("tokker_strategy");
+      if (storedStrategy) {
+        setStrategyResult(JSON.parse(storedStrategy));
+        setHasAnimatedConfetti(true);
+      }
       return;
     }
-    setData(JSON.parse(stored));
 
-    const storedStrategy = sessionStorage.getItem("tokker_strategy");
-    if (storedStrategy) {
-      setStrategyResult(JSON.parse(storedStrategy));
-      setHasAnimatedConfetti(true); // Don't re-confetti on reload
+    // Auto-enrich if we have a TikTok handle from OAuth
+    if (tiktokHandle) {
+      setEnriching(true);
+      fetch("/api/enrich", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ handle: tiktokHandle }),
+      })
+        .then((res) => {
+          if (!res.ok) throw new Error("Enrichment failed");
+          return res.json();
+        })
+        .then((enrichData) => {
+          sessionStorage.setItem(
+            "tokker_enrichment",
+            JSON.stringify(enrichData)
+          );
+          setData(enrichData);
+          setEnriching(false);
+        })
+        .catch(() => {
+          setEnriching(false);
+          router.push("/");
+        });
+      return;
     }
-  }, [router]);
+
+    // No cached data and no TikTok handle — go to home to enter handle
+    router.push("/");
+  }, [ready, authenticated, tiktokHandle, router]);
 
   async function handleMarketingRequest(request: string) {
     if (!data) return;
@@ -148,8 +181,11 @@ export default function Dashboard() {
 
   if (!ready || !authenticated || !data) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-screen flex-col items-center justify-center gap-3">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand border-t-transparent" />
+        {enriching && (
+          <p className="text-sm text-muted">Finding your brand matches...</p>
+        )}
       </div>
     );
   }
