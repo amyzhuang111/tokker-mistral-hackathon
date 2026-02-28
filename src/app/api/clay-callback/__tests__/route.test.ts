@@ -5,17 +5,16 @@ vi.mock("@/lib/clay", () => ({
   completeRequest: vi.fn(),
 }));
 
-import { POST } from "../route";
 import { normalizeClayResponse, completeRequest } from "@/lib/clay";
 import { NextRequest } from "next/server";
 
 const mockNormalize = vi.mocked(normalizeClayResponse);
 const mockComplete = vi.mocked(completeRequest);
 
-function makeRequest(body: unknown) {
+function makeRequest(body: unknown, headers?: Record<string, string>) {
   return new NextRequest("http://localhost/api/clay-callback", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...headers },
     body: JSON.stringify(body),
   });
 }
@@ -24,9 +23,11 @@ describe("POST /api/clay-callback", () => {
   beforeEach(() => {
     mockNormalize.mockReset();
     mockComplete.mockReset();
+    vi.resetModules();
   });
 
   it("returns 400 when request_id is missing", async () => {
+    const { POST } = await import("../route");
     const res = await POST(makeRequest({ tiktok_handle: "testuser" }));
     expect(res.status).toBe(400);
     const json = await res.json();
@@ -40,6 +41,7 @@ describe("POST /api/clay-callback", () => {
     };
     mockNormalize.mockReturnValue(normalizedData);
 
+    const { POST } = await import("../route");
     const res = await POST(makeRequest({
       request_id: "req-123",
       tiktok_handle: "testuser",
@@ -58,6 +60,7 @@ describe("POST /api/clay-callback", () => {
       throw new Error("Parse failed");
     });
 
+    const { POST } = await import("../route");
     const res = await POST(makeRequest({
       request_id: "req-456",
       tiktok_handle: "testuser",
@@ -66,5 +69,29 @@ describe("POST /api/clay-callback", () => {
     expect(res.status).toBe(500);
     const json = await res.json();
     expect(json.error).toMatch(/Callback processing failed/i);
+  });
+
+  it("returns 401 when CLAY_API_KEY is set and auth header is missing", async () => {
+    vi.stubEnv("CLAY_API_KEY", "secret-key");
+    const { POST } = await import("../route");
+    const res = await POST(makeRequest({ request_id: "req-789" }));
+    expect(res.status).toBe(401);
+    vi.unstubAllEnvs();
+  });
+
+  it("accepts request when auth header matches CLAY_API_KEY", async () => {
+    vi.stubEnv("CLAY_API_KEY", "secret-key");
+    mockNormalize.mockReturnValue({
+      creator: { handle: "u", followers: "", niche: "", avgViews: "", topContentThemes: [] },
+      brands: [],
+    });
+
+    const { POST } = await import("../route");
+    const res = await POST(makeRequest(
+      { request_id: "req-auth", tiktok_handle: "u" },
+      { Authorization: "Bearer secret-key" },
+    ));
+    expect(res.status).toBe(200);
+    vi.unstubAllEnvs();
   });
 });

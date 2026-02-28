@@ -19,6 +19,10 @@ import { discoverBrands } from "./mistral";
 
 const CLAY_WEBHOOK_URL = process.env.CLAY_WEBHOOK_URL;
 const CLAY_API_KEY = process.env.CLAY_API_KEY;
+const CALLBACK_BASE_URL =
+  process.env.NEXT_PUBLIC_VERCEL_URL
+    ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
+    : process.env.CALLBACK_BASE_URL ?? "http://localhost:3000";
 
 export interface ClayEnrichmentInput {
   tiktok_handle: string;
@@ -117,6 +121,7 @@ export async function triggerClayEnrichment(
         request_id: requestId,
         tiktok_handle: input.tiktok_handle,
         niche_description: input.niche_description ?? "",
+        callback_url: `${CALLBACK_BASE_URL}/api/clay-callback`,
       }),
     });
 
