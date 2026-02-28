@@ -31,7 +31,8 @@
       "Bash(git config:*)",
       "Bash(which vercel 2>/dev/null || npx vercel --version 2>&1)",
       "Bash(cd \"/mnt/c/Users/win/OneDrive/Desktop/Coding Projects/Tokker/tokker-mistral-hackathon\" && vercel whoami 2>&1)",
-      "Bash(cd \"/mnt/c/Users/win/OneDrive/Desktop/Coding Projects/Tokker/tokker-mistral-hackathon\" && vercel --prod --yes 2>&1)"
+      "Bash(cd \"/mnt/c/Users/win/OneDrive/Desktop/Coding Projects/Tokker/tokker-mistral-hackathon\" && vercel --prod --yes 2>&1)",
+      "Bash(cd \"/mnt/c/Users/win/OneDrive/Desktop/Coding Projects/Tokker/tokker-mistral-hackathon\" && npm install @privy-io/react-auth framer-motion lucide-react canvas-confetti sonner 2>&1)"
     ]
   }
 }
