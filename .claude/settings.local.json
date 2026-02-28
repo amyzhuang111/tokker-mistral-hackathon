@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd \"/mnt/c/Users/win/OneDrive/Desktop/Coding Projects/Tokker/tokker-mistral-hackathon\" && npm run build 2>&2)",
+      "Bash(cd \"/mnt/c/Users/win/OneDrive/Desktop/Coding Projects/Tokker/tokker-mistral-hackathon\" && npm install @mistralai/mistralai 2>&1)",
+      "Bash(cd \"/mnt/c/Users/win/OneDrive/Desktop/Coding Projects/Tokker/tokker-mistral-hackathon\" && npm run build 2>&1)"
+    ]
+  }
+}
