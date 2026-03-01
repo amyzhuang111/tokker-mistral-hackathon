@@ -219,26 +219,29 @@ export function normalizeClayResponse(raw: any, handle: string): ClayEnrichmentR
     });
   }
 
-  // Build creator profile — merge nested creator object, flat fields, and Modash fields
+  // Clay sends Modash data under `influencer_details` — flatten it into the lookup chain
+  const inf = raw.influencer_details ?? raw.influencerDetails ?? {};
+  const profile = inf.profile ?? inf;
   const c = raw.creator ?? {};
+
   const creator: ClayCreator = {
     handle,
-    followers: c.followers ?? raw.followers ?? raw.followersCount ?? "N/A",
-    niche: c.niche ?? raw.niche ?? raw.interests?.[0] ?? "N/A",
-    avgViews: c.avgViews ?? raw.avg_views ?? raw.avgViews ?? "N/A",
-    topContentThemes: c.topContentThemes ?? raw.themes ?? raw.interests ?? [],
-    // Modash fields
-    bio: c.bio ?? raw.bio ?? undefined,
-    engagementRate: toNum(c.engagementRate ?? raw.engagementRate ?? raw.engagement_rate),
-    avgLikes: toNum(c.avgLikes ?? raw.avgLikes ?? raw.avg_likes),
-    avgComments: toNum(c.avgComments ?? raw.avgComments ?? raw.avg_comments),
-    postsCount: toNum(c.postsCount ?? raw.postsCount ?? raw.posts_count),
-    gender: c.gender ?? raw.gender ?? undefined,
-    country: c.country ?? raw.country ?? undefined,
-    city: c.city ?? raw.city ?? undefined,
-    isVerified: c.isVerified ?? raw.isVerified ?? raw.is_verified ?? undefined,
-    contacts: c.contacts ?? raw.contacts ?? undefined,
-    paidPostPerformance: toNum(c.paidPostPerformance ?? raw.paidPostPerformance ?? raw.paid_post_performance),
+    followers: c.followers ?? profile.followers ?? profile.followersCount ?? raw.followers ?? "N/A",
+    niche: c.niche ?? raw.niche ?? profile.interests?.[0] ?? "N/A",
+    avgViews: c.avgViews ?? raw.avg_views ?? profile.avgViews ?? "N/A",
+    topContentThemes: c.topContentThemes ?? raw.themes ?? profile.interests ?? [],
+    // Modash / influencer_details fields
+    bio: c.bio ?? profile.bio ?? raw.bio ?? undefined,
+    engagementRate: toNum(profile.engagementRate ?? profile.engagement_rate ?? raw.engagementRate),
+    avgLikes: toNum(profile.avgLikes ?? profile.avg_likes ?? raw.avgLikes),
+    avgComments: toNum(profile.avgComments ?? profile.avg_comments ?? raw.avgComments),
+    postsCount: toNum(profile.postsCount ?? profile.posts_count ?? raw.postsCount),
+    gender: profile.gender ?? raw.gender ?? undefined,
+    country: profile.country ?? raw.country ?? undefined,
+    city: profile.city ?? raw.city ?? undefined,
+    isVerified: profile.isVerified ?? profile.is_verified ?? raw.isVerified ?? undefined,
+    contacts: profile.contacts ?? raw.contacts ?? undefined,
+    paidPostPerformance: toNum(profile.paidPostPerformance ?? profile.paid_post_performance ?? raw.paidPostPerformance),
   };
 
   return { creator, brands };

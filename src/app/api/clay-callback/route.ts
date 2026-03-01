@@ -60,12 +60,15 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
 
-    // Log the raw payload shape for debugging new Clay table configs
+    // Log the raw payload shape for debugging Clay table configs
+    const inf = body.influencer_details ?? body.influencerDetails;
     console.log(
       "Clay callback received:",
       JSON.stringify({
         request_id: body.request_id,
         handle: body.tiktok_handle ?? body.handle,
+        hasInfluencerDetails: !!inf,
+        influencerDetailsKeys: inf ? Object.keys(inf) : [],
         brandCount: (body.brands ?? body.results ?? body.rows ?? []).length,
         keys: Object.keys(body),
       })
