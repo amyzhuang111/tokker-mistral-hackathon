@@ -100,7 +100,7 @@ describe("discoverBrands", () => {
   });
 });
 
-// ─── runAgent ────────────────────────────────────────────────────────────────
+// ─── runAgent (JSON mode — single API call) ──────────────────────────────────
 
 describe("runAgent", () => {
   const creator: CreatorProfile = {
@@ -129,58 +129,25 @@ describe("runAgent", () => {
     mockComplete.mockReset();
   });
 
-  it("processes tool calls for analyze and compile", async () => {
-    // First call: model returns analyze_creator_brand_fit tool call
-    mockComplete.mockResolvedValueOnce({
-      choices: [{
-        message: {
-          content: "",
-          toolCalls: [{
-            id: "call_1",
-            function: {
-              name: "analyze_creator_brand_fit",
-              arguments: JSON.stringify({
-                brand_name: "Nike",
-                brand_domain: "nike.com",
-                pitch_angle: "Fitness overlap",
-                content_formats: ["product review"],
-                talking_points: ["audience overlap", "brand values"],
-                pitch_script: "Dear Nike...",
-                subject_line: "Partnership opportunity",
-                estimated_value: "$5K-$10K",
-              }),
-            },
-          }],
+  it("parses JSON response with brand strategies", async () => {
+    const responsePayload = {
+      overallStrategy: "Focus on fitness brands with high engagement.",
+      brandStrategies: [
+        {
+          brandName: "Nike",
+          brandDomain: "nike.com",
+          pitchAngle: "Fitness overlap",
+          contentFormats: ["product review"],
+          talkingPoints: ["audience overlap", "brand values"],
+          pitchScript: "Dear Nike...",
+          subjectLine: "Partnership opportunity",
+          estimatedValue: "$5K-$10K",
         },
-        finishReason: "tool_calls",
-      }],
-    });
+      ],
+    };
 
-    // Second call: model returns compile_pr_strategy tool call
-    mockComplete.mockResolvedValueOnce({
-      choices: [{
-        message: {
-          content: "",
-          toolCalls: [{
-            id: "call_2",
-            function: {
-              name: "compile_pr_strategy",
-              arguments: JSON.stringify({
-                overall_strategy: "Focus on fitness brands with high engagement.",
-              }),
-            },
-          }],
-        },
-        finishReason: "tool_calls",
-      }],
-    });
-
-    // Third call: model returns stop (no more tool calls)
-    mockComplete.mockResolvedValueOnce({
-      choices: [{
-        message: { content: "Done!", toolCalls: [] },
-        finishReason: "stop",
-      }],
+    mockComplete.mockResolvedValue({
+      choices: [{ message: { content: JSON.stringify(responsePayload) } }],
     });
 
     const result = await runAgent(creator, brands, "Help me find brand deals");
@@ -188,92 +155,51 @@ describe("runAgent", () => {
     expect(result.brandStrategies[0].brandName).toBe("Nike");
     expect(result.brandStrategies[0].pitchAngle).toBe("Fitness overlap");
     expect(result.overallStrategy).toBe("Focus on fitness brands with high engagement.");
+    expect(mockComplete).toHaveBeenCalledTimes(1);
   });
 
-  it("returns empty strategies when model returns no tool calls", async () => {
+  it("returns empty strategies when response has no brandStrategies", async () => {
     mockComplete.mockResolvedValue({
-      choices: [{
-        message: { content: "No tools needed.", toolCalls: [] },
-        finishReason: "stop",
-      }],
+      choices: [{ message: { content: JSON.stringify({ overallStrategy: "Nothing to do." }) } }],
     });
 
     const result = await runAgent(creator, brands, "Help me find brand deals");
     expect(result.brandStrategies).toEqual([]);
+    expect(result.overallStrategy).toBe("Nothing to do.");
   });
 
-  it("generates fallback strategy when no compile tool call is made", async () => {
-    // Model only calls analyze, never calls compile
-    mockComplete.mockResolvedValueOnce({
-      choices: [{
-        message: {
-          content: "",
-          toolCalls: [{
-            id: "call_1",
-            function: {
-              name: "analyze_creator_brand_fit",
-              arguments: JSON.stringify({
-                brand_name: "Nike",
-                brand_domain: "nike.com",
-                pitch_angle: "Fitness overlap",
-                content_formats: ["review"],
-                talking_points: ["point1"],
-                pitch_script: "Script",
-                subject_line: "Subject",
-                estimated_value: "$5K",
-              }),
-            },
-          }],
+  it("generates fallback overallStrategy when missing from response", async () => {
+    const responsePayload = {
+      brandStrategies: [
+        {
+          brandName: "Nike",
+          brandDomain: "nike.com",
+          pitchAngle: "Fitness overlap",
+          contentFormats: ["review"],
+          talkingPoints: ["point1"],
+          pitchScript: "Script",
+          subjectLine: "Subject",
+          estimatedValue: "$5K",
         },
-        finishReason: "tool_calls",
-      }],
-    });
+      ],
+    };
 
-    // Second call: stop without compile
-    mockComplete.mockResolvedValueOnce({
-      choices: [{
-        message: { content: "All done", toolCalls: [] },
-        finishReason: "stop",
-      }],
+    mockComplete.mockResolvedValue({
+      choices: [{ message: { content: JSON.stringify(responsePayload) } }],
     });
 
     const result = await runAgent(creator, brands, "Help me");
     expect(result.brandStrategies).toHaveLength(1);
-    // Should have fallback strategy since compile was never called
+    // Should have fallback strategy
     expect(result.overallStrategy).toContain("@fitjenna");
     expect(result.overallStrategy).toContain("Nike");
   });
 
-  it("exits safely after max iterations", async () => {
-    // Always return a tool call — agent should stop after 15 iterations
+  it("throws on empty response", async () => {
     mockComplete.mockResolvedValue({
-      choices: [{
-        message: {
-          content: "",
-          toolCalls: [{
-            id: "call_loop",
-            function: {
-              name: "analyze_creator_brand_fit",
-              arguments: JSON.stringify({
-                brand_name: "Infinite",
-                brand_domain: "loop.com",
-                pitch_angle: "Looping",
-                content_formats: ["loop"],
-                talking_points: ["point"],
-                pitch_script: "Script",
-                subject_line: "Subject",
-                estimated_value: "$0",
-              }),
-            },
-          }],
-        },
-        finishReason: "tool_calls",
-      }],
+      choices: [{ message: { content: "" } }],
     });
 
-    const result = await runAgent(creator, brands, "Loop forever");
-    // Should have collected 15 brand strategies (one per iteration)
-    expect(result.brandStrategies).toHaveLength(15);
-    expect(mockComplete).toHaveBeenCalledTimes(15);
+    await expect(runAgent(creator, brands, "Test")).rejects.toThrow("Mistral returned empty response");
   });
 });

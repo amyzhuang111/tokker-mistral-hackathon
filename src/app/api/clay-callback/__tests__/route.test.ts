@@ -26,12 +26,12 @@ describe("POST /api/clay-callback", () => {
     vi.resetModules();
   });
 
-  it("returns 400 when request_id is missing", async () => {
+  it("returns 200 with warning when request_id is missing", async () => {
     const { POST } = await import("../route");
     const res = await POST(makeRequest({ tiktok_handle: "testuser" }));
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(200);
     const json = await res.json();
-    expect(json.error).toMatch(/Missing request_id/i);
+    expect(json.warning).toMatch(/No request_id/i);
   });
 
   it("normalizes and stores data on valid callback", async () => {
@@ -55,7 +55,7 @@ describe("POST /api/clay-callback", () => {
     expect(mockComplete).toHaveBeenCalledWith("req-123", normalizedData);
   });
 
-  it("returns 500 on processing error", async () => {
+  it("returns 200 even on processing error (permissive)", async () => {
     mockNormalize.mockImplementation(() => {
       throw new Error("Parse failed");
     });
@@ -66,16 +66,19 @@ describe("POST /api/clay-callback", () => {
       tiktok_handle: "testuser",
     }));
 
-    expect(res.status).toBe(500);
+    // Permissive — always 200
+    expect(res.status).toBe(200);
     const json = await res.json();
-    expect(json.error).toMatch(/Callback processing failed/i);
+    expect(json.status).toBe("ok");
   });
 
-  it("returns 401 when CLAY_API_KEY is set and auth header is missing", async () => {
+  it("returns 200 with warning when API key mismatches", async () => {
     vi.stubEnv("CLAY_API_KEY", "secret-key");
     const { POST } = await import("../route");
     const res = await POST(makeRequest({ request_id: "req-789" }));
-    expect(res.status).toBe(401);
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json.warning).toMatch(/API key mismatch/i);
     vi.unstubAllEnvs();
   });
 

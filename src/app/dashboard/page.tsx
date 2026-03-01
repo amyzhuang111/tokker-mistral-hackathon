@@ -18,17 +18,11 @@ import BrandCard, {
   type BrandStrategy,
 } from "@/components/BrandCard";
 import MarketingRequest from "@/components/MarketingRequest";
-
-interface CreatorProfile {
-  handle: string;
-  followers: string;
-  niche: string;
-  avgViews: string;
-  topContentThemes: string[];
-}
+import CreatorProfileCard from "@/components/CreatorProfileCard";
+import type { ClayCreator } from "@/lib/clay";
 
 interface EnrichmentData {
-  creator: CreatorProfile;
+  creator: ClayCreator;
   brands: Brand[];
 }
 
@@ -195,26 +189,15 @@ export default function Dashboard() {
 
   return (
     <div className="mx-auto min-h-screen max-w-5xl px-4 py-6">
-      {/* Header */}
+      {/* Header nav */}
       <div className="mb-6 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => router.push("/")}
-            className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/[0.06] bg-surface-1 text-muted transition hover:text-white"
-            aria-label="Go back"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </button>
-          <div>
-            <h1 className="text-lg font-bold text-white">
-              @{creator.handle}
-            </h1>
-            <p className="text-xs text-muted">
-              {creator.followers} followers &middot; {creator.niche} &middot;{" "}
-              {creator.avgViews} avg views
-            </p>
-          </div>
-        </div>
+        <button
+          onClick={() => router.push("/")}
+          className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/[0.06] bg-surface-1 text-muted transition hover:text-white"
+          aria-label="Go back"
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </button>
         <div className="flex items-center gap-2">
           {email && (
             <span className="hidden text-xs text-subtle sm:block">
@@ -231,16 +214,9 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Creator themes as inline tags */}
-      <div className="mb-6 flex flex-wrap gap-1.5">
-        {creator.topContentThemes.map((theme) => (
-          <span
-            key={theme}
-            className="rounded-full bg-brand/10 px-3 py-1 text-xs font-medium text-brand"
-          >
-            {theme}
-          </span>
-        ))}
+      {/* Rich creator profile card */}
+      <div className="mb-6">
+        <CreatorProfileCard creator={creator} />
       </div>
 
       {/* Marketing request */}
