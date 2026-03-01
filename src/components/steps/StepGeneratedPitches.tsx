@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Sparkles,
   ChevronDown,
   ChevronUp,
+  ChevronLeft,
+  ChevronRight,
   DollarSign,
   Wallet,
   Copy,
@@ -50,6 +52,8 @@ export default function StepGeneratedPitches({
   const [copied, setCopied] = useState(false);
   const [creatingWallet, setCreatingWallet] = useState(false);
   const [showWalletInfo, setShowWalletInfo] = useState(false);
+  const [activeIdx, setActiveIdx] = useState(0);
+  const [slideDir, setSlideDir] = useState<1 | -1>(1);
 
   const strategyMap = useMemo(() => {
     const map = new Map<string, BrandStrategy>();
@@ -277,19 +281,91 @@ export default function StepGeneratedPitches({
         </div>
       )}
 
-      {/* Activated brand cards — editable pitches */}
-      <div className="grid gap-4 md:grid-cols-2">
-        {activatedBrands.map((brand, i) => (
-          <BrandCard
-            key={brand.domain}
-            brand={brand}
-            strategy={strategyMap.get(brand.domain)}
-            variant="activated"
-            index={i}
-            onPitchEdit={onPitchEdit}
-          />
-        ))}
-      </div>
+      {/* Activated brand cards — sliding gallery */}
+      {activatedBrands.length > 0 && (
+        <div>
+          {/* Navigation header */}
+          <div className="mb-3 flex items-center justify-between">
+            <p className="text-xs text-muted">
+              {activeIdx + 1} of {activatedBrands.length}
+            </p>
+            <div className="flex gap-1.5">
+              <button
+                onClick={() => {
+                  setSlideDir(-1);
+                  setActiveIdx((i) => Math.max(0, i - 1));
+                }}
+                disabled={activeIdx === 0}
+                className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/[0.06] bg-surface-1 text-muted transition hover:text-white disabled:opacity-30 disabled:hover:text-muted"
+                aria-label="Previous brand"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => {
+                  setSlideDir(1);
+                  setActiveIdx((i) =>
+                    Math.min(activatedBrands.length - 1, i + 1)
+                  );
+                }}
+                disabled={activeIdx === activatedBrands.length - 1}
+                className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/[0.06] bg-surface-1 text-muted transition hover:text-white disabled:opacity-30 disabled:hover:text-muted"
+                aria-label="Next brand"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+
+          {/* Slide container */}
+          <div className="relative overflow-hidden">
+            <AnimatePresence mode="wait" custom={slideDir}>
+              <motion.div
+                key={activatedBrands[activeIdx].domain}
+                custom={slideDir}
+                variants={{
+                  enter: (dir: number) => ({ x: dir * 60, opacity: 0 }),
+                  center: { x: 0, opacity: 1 },
+                  exit: (dir: number) => ({ x: dir * -60, opacity: 0 }),
+                }}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ duration: 0.25, ease: "easeInOut" }}
+              >
+                <BrandCard
+                  brand={activatedBrands[activeIdx]}
+                  strategy={strategyMap.get(activatedBrands[activeIdx].domain)}
+                  variant="activated"
+                  index={0}
+                  onPitchEdit={onPitchEdit}
+                />
+              </motion.div>
+            </AnimatePresence>
+          </div>
+
+          {/* Dot indicators */}
+          {activatedBrands.length > 1 && (
+            <div className="mt-3 flex justify-center gap-1.5">
+              {activatedBrands.map((brand, i) => (
+                <button
+                  key={brand.domain}
+                  onClick={() => {
+                    setSlideDir(i > activeIdx ? 1 : -1);
+                    setActiveIdx(i);
+                  }}
+                  className={`h-1.5 rounded-full transition-all ${
+                    i === activeIdx
+                      ? "w-4 bg-brand"
+                      : "w-1.5 bg-white/20 hover:bg-white/40"
+                  }`}
+                  aria-label={`Go to ${brand.name}`}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Next steps */}
       <div className="rounded-2xl border border-white/[0.06] bg-surface-1 p-5">

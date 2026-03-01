@@ -56,7 +56,7 @@ export default function Dashboard() {
             <img
               src="/tokker.png"
               alt="Tokker"
-              className="h-8 w-8 rounded-full"
+              className="h-8 w-8 rounded-full object-cover"
             />
             <span className="text-sm font-bold text-white">Tokker</span>
           </button>
