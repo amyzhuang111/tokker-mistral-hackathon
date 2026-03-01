@@ -109,10 +109,16 @@ Creator enters handle
         │
         ▼
    Copy / Email ───────────► Send to brands
+        │
+        ▼
+   Stripe Privy ──────────► Stablecoin wallet (USDC on Base)
+                              for creator payouts
 
 * Voice input at step 4 is powered by ElevenLabs STT (Scribe v1).
   The browser records audio via MediaRecorder, sends it to /api/transcribe,
   which proxies to ElevenLabs for high-accuracy transcription.
+* Stripe Privy creates a stablecoin wallet for each creator on sign-up,
+  enabling instant USDC payouts when brand deals land.
 ```
 
 ## API Routes

@@ -194,6 +194,25 @@ export default function DashboardFlow({ initialData }: DashboardFlowProps) {
     }
   }
 
+  // --- Pitch editing ---
+  function handlePitchEdit(
+    domain: string,
+    field: "subjectLine" | "pitchScript",
+    value: string
+  ) {
+    setStrategyResult((prev) => {
+      if (!prev) return prev;
+      const updated = {
+        ...prev,
+        brandStrategies: prev.brandStrategies.map((s) =>
+          s.brandDomain === domain ? { ...s, [field]: value } : s
+        ),
+      };
+      sessionStorage.setItem("tokker_strategy", JSON.stringify(updated));
+      return updated;
+    });
+  }
+
   // --- Navigation ---
   function goForward() {
     if (currentStep >= 4) return;
@@ -294,6 +313,7 @@ export default function DashboardFlow({ initialData }: DashboardFlowProps) {
             onToggleStrategy={() => setShowStrategy((s) => !s)}
             embeddedWallet={embeddedWallet}
             createWallet={createWallet}
+            onPitchEdit={handlePitchEdit}
           />
         )}
       </StepSlider>

@@ -43,21 +43,21 @@ Creator Input (TikTok handle or voice description)
   │   - tool selection logic          │
   └─────────┬─────────────────────┘
             │
-    ┌───────┼───────────┬──────────┐
-    ▼       ▼           ▼          ▼
-  Clay    Mistral     ElevenLabs  x402
-  API     (analysis)   API        Protocol
-    │       │           │          │
-    ▼       ▼           ▼          ▼
-  Brand   Pitch      Voice      Stablecoin
-  Enrichment Strategy  Pitches   Settlement
-    │       │           │          │
-    └───────┼───────────┼──────────┘
+    ┌───────┼───────────┬──────────┬──────────┐
+    ▼       ▼           ▼          ▼          ▼
+  Clay    Mistral     ElevenLabs  Stripe    x402
+  API     (analysis)   API        Privy     Protocol
+    │       │           │          │          │
+    ▼       ▼           ▼          ▼          ▼
+  Brand   Pitch      Voice STT  Stablecoin  Payment
+  Enrichment Strategy  + TTS    Wallet      Settlement
+    │       │           │        (USDC)       │
+    └───────┼───────────┼──────────┼──────────┘
             ▼
     Creator Dashboard
-    (brand cards + scripts + audio + payments)
+    (brand cards + scripts + audio + wallet + payments)
 
-Stack: Next.js (App Router) deployed on Vercel. All agent logic lives in API routes (/api/agent, /api/enrich, /api/voice, /api/pay). Mistral function calling as the agent backbone. Frontend is React via Next.js pages — single deployable artifact, no separate backend to manage. Vercel gives you instant deploys, preview URLs for the judges, and serverless functions for the API routes.
+Stack: Next.js (App Router) deployed on Vercel. All agent logic lives in API routes (/api/agent, /api/enrich, /api/transcribe). Mistral function calling as the agent backbone. Stripe Privy handles auth (TikTok/Google OAuth) and creates a stablecoin wallet (USDC on Base) for each creator on sign-up, enabling instant payouts when brand deals land. Frontend is React via Next.js pages — single deployable artifact, no separate backend to manage. Vercel gives you instant deploys, preview URLs for the judges, and serverless functions for the API routes.
 
 Why Next.js + Vercel for a hackathon: One repo, one deploy command. API routes handle all server-side logic (Mistral calls, Clay webhooks, ElevenLabs requests, x402 transactions) while the frontend renders the creator dashboard. Judges get a live URL they can click — no "run it locally" friction. Vercel's edge functions also keep latency low for the demo.
 

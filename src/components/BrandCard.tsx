@@ -45,6 +45,7 @@ interface BrandCardProps {
   onToggle?: () => void;
   estimatedRange?: string;
   followerCount?: string;
+  onPitchEdit?: (domain: string, field: "subjectLine" | "pitchScript", value: string) => void;
 }
 
 function ScoreRing({ score }: { score: number }) {
@@ -100,6 +101,7 @@ export default function BrandCard({
   onToggle,
   estimatedRange,
   followerCount,
+  onPitchEdit,
 }: BrandCardProps) {
   const [expanded, setExpanded] = useState(false);
   const [showPitch, setShowPitch] = useState(false);
@@ -302,13 +304,44 @@ export default function BrandCard({
               animate={{ opacity: 1 }}
               className="space-y-3"
             >
-              <div className="rounded-xl bg-surface-2 p-4">
-                <p className="mb-2 text-xs text-subtle">
-                  Subject: {strategy.subjectLine}
-                </p>
-                <p className="whitespace-pre-wrap font-mono text-sm leading-relaxed text-white/80">
-                  {strategy.pitchScript}
-                </p>
+              <div className="rounded-xl bg-surface-2 p-4 space-y-3">
+                {/* Editable subject line */}
+                <div>
+                  <label className="mb-1 block text-xs text-subtle">Subject</label>
+                  {onPitchEdit ? (
+                    <input
+                      type="text"
+                      value={strategy.subjectLine}
+                      onChange={(e) =>
+                        onPitchEdit(brand.domain, "subjectLine", e.target.value)
+                      }
+                      className="w-full rounded-lg border border-white/[0.08] bg-surface-1 px-3 py-2 text-sm text-white outline-none transition focus:border-brand/50 focus:ring-1 focus:ring-brand/20"
+                    />
+                  ) : (
+                    <p className="text-sm text-white/80">
+                      {strategy.subjectLine}
+                    </p>
+                  )}
+                </div>
+
+                {/* Editable pitch body */}
+                <div>
+                  <label className="mb-1 block text-xs text-subtle">Pitch</label>
+                  {onPitchEdit ? (
+                    <textarea
+                      value={strategy.pitchScript}
+                      onChange={(e) =>
+                        onPitchEdit(brand.domain, "pitchScript", e.target.value)
+                      }
+                      rows={8}
+                      className="w-full resize-y rounded-lg border border-white/[0.08] bg-surface-1 p-3 font-mono text-sm leading-relaxed text-white/80 outline-none transition focus:border-brand/50 focus:ring-1 focus:ring-brand/20"
+                    />
+                  ) : (
+                    <p className="whitespace-pre-wrap font-mono text-sm leading-relaxed text-white/80">
+                      {strategy.pitchScript}
+                    </p>
+                  )}
+                </div>
               </div>
 
               {/* Action buttons */}

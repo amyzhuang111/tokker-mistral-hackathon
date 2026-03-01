@@ -10,6 +10,7 @@ import {
   Wallet,
   Copy,
   Check,
+  Info,
 } from "lucide-react";
 import confetti from "canvas-confetti";
 import BrandCard from "@/components/BrandCard";
@@ -31,6 +32,7 @@ interface StepGeneratedPitchesProps {
   onToggleStrategy: () => void;
   embeddedWallet: EmbeddedWallet | undefined;
   createWallet: () => Promise<unknown>;
+  onPitchEdit: (domain: string, field: "subjectLine" | "pitchScript", value: string) => void;
 }
 
 export default function StepGeneratedPitches({
@@ -43,9 +45,11 @@ export default function StepGeneratedPitches({
   onToggleStrategy,
   embeddedWallet,
   createWallet,
+  onPitchEdit,
 }: StepGeneratedPitchesProps) {
   const [copied, setCopied] = useState(false);
   const [creatingWallet, setCreatingWallet] = useState(false);
+  const [showWalletInfo, setShowWalletInfo] = useState(false);
 
   const strategyMap = useMemo(() => {
     const map = new Map<string, BrandStrategy>();
@@ -120,65 +124,64 @@ export default function StepGeneratedPitches({
         )}
       </motion.div>
 
-      {/* Overall strategy banner */}
-      {strategyResult.overallStrategy && (
-        <div>
-          {showStrategy ? (
-            <motion.div
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="rounded-2xl border border-success/20 bg-success/5 p-5"
-            >
-              <div className="mb-2 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-success" />
-                  <h3 className="text-sm font-bold text-success">
-                    Your game plan
-                  </h3>
-                </div>
-                <button
-                  onClick={onToggleStrategy}
-                  className="text-success/40 transition hover:text-success"
-                >
-                  <ChevronUp className="h-4 w-4" />
-                </button>
-              </div>
-              <p className="whitespace-pre-wrap text-sm leading-relaxed text-white/70">
-                {strategyResult.overallStrategy}
-              </p>
-            </motion.div>
-          ) : (
-            <button
-              onClick={onToggleStrategy}
-              className="flex items-center gap-2 text-xs text-success transition hover:text-success/80"
-            >
-              <Sparkles className="h-3 w-3" />
-              Show your game plan
-              <ChevronDown className="h-3 w-3" />
-            </button>
-          )}
-        </div>
-      )}
-
-      {/* Activated brand cards */}
-      <div className="grid gap-4 md:grid-cols-2">
-        {activatedBrands.map((brand, i) => (
-          <BrandCard
-            key={brand.domain}
-            brand={brand}
-            strategy={strategyMap.get(brand.domain)}
-            variant="activated"
-            index={i}
-          />
-        ))}
-      </div>
-
-      {/* Payout wallet */}
+      {/* Payout wallet — right under estimated total */}
       <div className="rounded-2xl border border-white/[0.06] bg-surface-1 p-5">
         <div className="mb-4 flex items-center gap-2">
           <Wallet className="h-5 w-5 text-brand" />
-          <h3 className="text-base font-bold text-white">Payout Wallet</h3>
+          <h3 className="flex-1 text-base font-bold text-white">Payout Wallet</h3>
+          <button
+            onClick={() => setShowWalletInfo((s) => !s)}
+            className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs text-muted transition hover:bg-white/[0.04] hover:text-white"
+            aria-expanded={showWalletInfo}
+            aria-label="Learn about stablecoin payments"
+          >
+            <Info className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">How it works</span>
+          </button>
         </div>
+
+        {showWalletInfo && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            className="mb-4 space-y-3 overflow-hidden rounded-xl bg-brand/5 p-4"
+          >
+            <h4 className="text-sm font-semibold text-white">
+              Stablecoin payments on Base
+            </h4>
+            <p className="text-sm leading-relaxed text-white/60">
+              Brands pay you in <span className="font-medium text-white/80">USDC</span>, a stablecoin pegged 1:1 to the US dollar.
+              Your wallet lives on <span className="font-medium text-white/80">Base</span>, a fast and low-cost network — so you receive
+              payments in seconds with near-zero fees.
+            </p>
+            <ul className="space-y-1.5 text-sm text-white/60">
+              <li className="flex items-start gap-2">
+                <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-brand/50" />
+                1 USDC = $1 USD — no crypto volatility
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-brand/50" />
+                Withdraw to your bank anytime via Coinbase or any exchange
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-brand/50" />
+                Share your wallet address or QR code with brands to get paid
+              </li>
+            </ul>
+            {embeddedWallet && (
+              <div className="flex flex-col items-center gap-2 rounded-xl bg-white p-4">
+                <img
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${embeddedWallet.address}&bgcolor=FFFFFF&color=000000`}
+                  alt="Wallet QR code"
+                  className="h-40 w-40"
+                />
+                <p className="font-mono text-xs text-zinc-500">
+                  {embeddedWallet.address}
+                </p>
+              </div>
+            )}
+          </motion.div>
+        )}
 
         {embeddedWallet ? (
           <div className="space-y-3">
@@ -232,6 +235,60 @@ export default function StepGeneratedPitches({
             </button>
           </div>
         )}
+      </div>
+
+      {/* Overall strategy banner */}
+      {strategyResult.overallStrategy && (
+        <div>
+          {showStrategy ? (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="rounded-2xl border border-success/20 bg-success/5 p-5"
+            >
+              <div className="mb-2 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-success" />
+                  <h3 className="text-sm font-bold text-success">
+                    Your game plan
+                  </h3>
+                </div>
+                <button
+                  onClick={onToggleStrategy}
+                  className="text-success/40 transition hover:text-success"
+                >
+                  <ChevronUp className="h-4 w-4" />
+                </button>
+              </div>
+              <p className="whitespace-pre-wrap text-sm leading-relaxed text-white/70">
+                {strategyResult.overallStrategy}
+              </p>
+            </motion.div>
+          ) : (
+            <button
+              onClick={onToggleStrategy}
+              className="flex items-center gap-2 text-xs text-success transition hover:text-success/80"
+            >
+              <Sparkles className="h-3 w-3" />
+              Show your game plan
+              <ChevronDown className="h-3 w-3" />
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Activated brand cards — editable pitches */}
+      <div className="grid gap-4 md:grid-cols-2">
+        {activatedBrands.map((brand, i) => (
+          <BrandCard
+            key={brand.domain}
+            brand={brand}
+            strategy={strategyMap.get(brand.domain)}
+            variant="activated"
+            index={i}
+            onPitchEdit={onPitchEdit}
+          />
+        ))}
       </div>
 
       {/* Next steps */}
