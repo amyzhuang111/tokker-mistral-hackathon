@@ -62,6 +62,10 @@ export default function CreatorInput({ defaultHandle }: { defaultHandle?: string
         data = await pollForResults(data.requestId);
       }
 
+      // Clear stale summary/strategy from previous scans
+      sessionStorage.removeItem("tokker_summary");
+      sessionStorage.removeItem("tokker_summary_handle");
+      sessionStorage.removeItem("tokker_strategy");
       sessionStorage.setItem("tokker_enrichment", JSON.stringify(data));
       router.push("/dashboard");
     } catch (err) {

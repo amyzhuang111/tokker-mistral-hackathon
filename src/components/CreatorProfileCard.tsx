@@ -71,30 +71,49 @@ export default function CreatorProfileCard({
 }: CreatorProfileCardProps) {
   const [summary, setSummary] = useState<CreatorSummary | null>(null);
   const [summaryLoading, setSummaryLoading] = useState(false);
+  const [summaryError, setSummaryError] = useState<string | null>(null);
   const [showAudience, setShowAudience] = useState(false);
 
-  // Fetch AI summary on mount
+  // Fetch AI summary on mount (or when creator changes)
   useEffect(() => {
+    // Check cache — but only use it if it matches the current creator
     const cached = sessionStorage.getItem("tokker_summary");
-    if (cached) {
+    const cachedHandle = sessionStorage.getItem("tokker_summary_handle");
+    if (cached && cachedHandle === creator.handle) {
       setSummary(JSON.parse(cached));
       return;
     }
 
+    // Clear stale cache for a different creator
+    sessionStorage.removeItem("tokker_summary");
+    sessionStorage.removeItem("tokker_summary_handle");
+    setSummary(null);
+    setSummaryError(null);
     setSummaryLoading(true);
+
     fetch("/api/summarize", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ creator }),
     })
-      .then((res) => (res.ok ? res.json() : null))
+      .then(async (res) => {
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error || `Summarize failed (${res.status})`);
+        }
+        return res.json();
+      })
       .then((data) => {
         if (data) {
           setSummary(data);
           sessionStorage.setItem("tokker_summary", JSON.stringify(data));
+          sessionStorage.setItem("tokker_summary_handle", creator.handle);
         }
       })
-      .catch(() => {})
+      .catch((err) => {
+        console.error("AI summary error:", err);
+        setSummaryError(err instanceof Error ? err.message : "Failed to generate summary");
+      })
       .finally(() => setSummaryLoading(false));
   }, [creator]);
 
@@ -211,6 +230,13 @@ export default function CreatorProfileCard({
         <div className="mb-4 flex items-center gap-2 rounded-xl bg-brand/5 p-4">
           <Sparkles className="h-4 w-4 animate-pulse text-brand" />
           <p className="text-sm text-muted">Generating AI insights...</p>
+        </div>
+      )}
+
+      {summaryError && (
+        <div className="mb-4 flex items-center gap-2 rounded-xl bg-red-500/10 p-4">
+          <Sparkles className="h-4 w-4 text-red-400" />
+          <p className="text-sm text-red-400">{summaryError}</p>
         </div>
       )}
 

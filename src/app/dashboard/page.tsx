@@ -103,28 +103,42 @@ export default function Dashboard() {
     // Auto-enrich if we have a TikTok handle from OAuth
     if (tiktokHandle) {
       setEnriching(true);
-      fetch("/api/enrich", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ handle: tiktokHandle }),
-      })
-        .then((res) => {
-          if (!res.ok) throw new Error("Enrichment failed");
-          return res.json();
-        })
-        .then((enrichData: EnrichmentData) => {
-          sessionStorage.setItem(
-            "tokker_enrichment",
-            JSON.stringify(enrichData)
-          );
-          setData(enrichData);
-          autoSelectTop3(enrichData.brands);
-          setEnriching(false);
-        })
-        .catch(() => {
-          setEnriching(false);
-          router.push("/");
+
+      async function autoEnrich() {
+        const res = await fetch("/api/enrich", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ handle: tiktokHandle }),
         });
+
+        if (!res.ok) throw new Error("Enrichment failed");
+        let enrichData = await res.json();
+
+        // Handle async Clay mode — poll until results arrive
+        if (enrichData.status === "pending" && enrichData.requestId) {
+          for (let i = 0; i < 60; i++) {
+            await new Promise((r) => setTimeout(r, 3000));
+            const pollRes = await fetch(`/api/enrich/${enrichData.requestId}`);
+            if (!pollRes.ok) throw new Error("Polling failed");
+            const pollData = await pollRes.json();
+            if (pollData.status === "complete") {
+              enrichData = pollData;
+              break;
+            }
+            if (i === 59) throw new Error("Enrichment timed out");
+          }
+        }
+
+        sessionStorage.setItem("tokker_enrichment", JSON.stringify(enrichData));
+        setData(enrichData);
+        autoSelectTop3(enrichData.brands);
+        setEnriching(false);
+      }
+
+      autoEnrich().catch(() => {
+        setEnriching(false);
+        router.push("/");
+      });
       return;
     }
 
