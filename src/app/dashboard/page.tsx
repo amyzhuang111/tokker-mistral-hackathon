@@ -282,6 +282,77 @@ export default function Dashboard() {
         <CreatorProfileCard creator={creator} onBrandsDiscovered={handleBrandsDiscovered} />
       </div>
 
+      {/* Brand cards header with filter tabs + select all */}
+      <div className="mb-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <h2 className="text-sm font-bold text-white">
+            {sortedBrands.length} brand
+            {sortedBrands.length !== 1 && "s"} found
+          </h2>
+          <button
+            onClick={toggleAllBrands}
+            className="flex items-center gap-1.5 text-xs text-muted transition hover:text-white"
+          >
+            {selectedBrands.size === data.brands.length ? (
+              <CheckSquare className="h-3.5 w-3.5" />
+            ) : (
+              <Square className="h-3.5 w-3.5" />
+            )}
+            {selectedBrands.size === data.brands.length
+              ? "Deselect all"
+              : "Select all"}
+          </button>
+        </div>
+        <div className="flex gap-1 rounded-xl bg-surface-1 p-1">
+          {(
+            [
+              ["all", "All"],
+              ["best-fit", "Best fit"],
+              ["highest-value", "Top value"],
+            ] as const
+          ).map(([mode, label]) => (
+            <button
+              key={mode}
+              onClick={() => setSortMode(mode)}
+              className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
+                sortMode === mode
+                  ? "bg-brand/15 text-brand"
+                  : "text-muted hover:text-white"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Brand cards grid */}
+      <div className="mb-6 grid gap-4 md:grid-cols-2">
+        {sortedBrands.map((brand, i) => (
+          <BrandCard
+            key={brand.domain}
+            brand={brand}
+            strategy={strategyMap.get(brand.domain)}
+            index={i}
+            selected={selectedBrands.has(brand.domain)}
+            onToggle={() => toggleBrand(brand.domain)}
+          />
+        ))}
+      </div>
+
+      {/* Empty state for no brands */}
+      {sortedBrands.length === 0 && (
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <p className="text-lg font-semibold text-white">
+            No matches yet
+          </p>
+          <p className="mt-1 text-sm text-muted">
+            Try a different niche or check back soon — we&apos;re always adding
+            new brands.
+          </p>
+        </div>
+      )}
+
       {/* Marketing request */}
       <div className="mb-6 rounded-2xl border border-white/[0.06] bg-surface-1 p-5">
         {selectedBrands.size === 0 ? (
@@ -360,77 +431,6 @@ export default function Dashboard() {
           Show your game plan
           <ChevronDown className="h-3 w-3" />
         </button>
-      )}
-
-      {/* Brand cards header with filter tabs + select all */}
-      <div className="mb-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <h2 className="text-sm font-bold text-white">
-            {sortedBrands.length} brand
-            {sortedBrands.length !== 1 && "s"} found
-          </h2>
-          <button
-            onClick={toggleAllBrands}
-            className="flex items-center gap-1.5 text-xs text-muted transition hover:text-white"
-          >
-            {selectedBrands.size === data.brands.length ? (
-              <CheckSquare className="h-3.5 w-3.5" />
-            ) : (
-              <Square className="h-3.5 w-3.5" />
-            )}
-            {selectedBrands.size === data.brands.length
-              ? "Deselect all"
-              : "Select all"}
-          </button>
-        </div>
-        <div className="flex gap-1 rounded-xl bg-surface-1 p-1">
-          {(
-            [
-              ["all", "All"],
-              ["best-fit", "Best fit"],
-              ["highest-value", "Top value"],
-            ] as const
-          ).map(([mode, label]) => (
-            <button
-              key={mode}
-              onClick={() => setSortMode(mode)}
-              className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
-                sortMode === mode
-                  ? "bg-brand/15 text-brand"
-                  : "text-muted hover:text-white"
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Brand cards grid */}
-      <div className="grid gap-4 md:grid-cols-2">
-        {sortedBrands.map((brand, i) => (
-          <BrandCard
-            key={brand.domain}
-            brand={brand}
-            strategy={strategyMap.get(brand.domain)}
-            index={i}
-            selected={selectedBrands.has(brand.domain)}
-            onToggle={() => toggleBrand(brand.domain)}
-          />
-        ))}
-      </div>
-
-      {/* Empty state for no brands */}
-      {sortedBrands.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <p className="text-lg font-semibold text-white">
-            No matches yet
-          </p>
-          <p className="mt-1 text-sm text-muted">
-            Try a different niche or check back soon — we&apos;re always adding
-            new brands.
-          </p>
-        </div>
       )}
     </div>
   );
