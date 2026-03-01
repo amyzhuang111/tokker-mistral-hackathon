@@ -39,6 +39,8 @@ interface BrandCardProps {
   brand: Brand;
   strategy?: BrandStrategy;
   index?: number;
+  selected?: boolean;
+  onToggle?: () => void;
 }
 
 function ScoreRing({ score }: { score: number }) {
@@ -89,6 +91,8 @@ export default function BrandCard({
   brand,
   strategy,
   index = 0,
+  selected,
+  onToggle,
 }: BrandCardProps) {
   const [expanded, setExpanded] = useState(false);
   const [showPitch, setShowPitch] = useState(false);
@@ -114,9 +118,13 @@ export default function BrandCard({
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: index * 0.08 }}
-      className="group rounded-2xl border border-white/[0.06] bg-surface-1 p-5 transition hover:border-brand/30"
+      className={`group rounded-2xl border bg-surface-1 p-5 transition ${
+        selected
+          ? "border-brand/40 shadow-[0_0_16px_-4px_rgba(254,44,85,0.3)]"
+          : "border-white/[0.06] hover:border-brand/30"
+      } ${selected === false ? "opacity-60" : ""}`}
     >
-      {/* Header row: favicon + name + score ring */}
+      {/* Header row: favicon + name + score ring + checkbox */}
       <div className="mb-3 flex items-center gap-3">
         <img
           src={`https://www.google.com/s2/favicons?domain=${brand.domain}&sz=64`}
@@ -133,6 +141,19 @@ export default function BrandCard({
           <p className="text-xs text-muted">{brand.industry}</p>
         </div>
         <ScoreRing score={brand.fitScore} />
+        {onToggle && (
+          <button
+            onClick={onToggle}
+            className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border transition ${
+              selected
+                ? "border-brand bg-brand text-white"
+                : "border-white/20 bg-transparent text-transparent hover:border-white/40"
+            }`}
+            aria-label={selected ? "Deselect brand" : "Select brand"}
+          >
+            {selected && <Check className="h-3.5 w-3.5" />}
+          </button>
+        )}
       </div>
 
       {/* Fit reason — one-liner */}
@@ -140,8 +161,8 @@ export default function BrandCard({
         {brand.fitReason}
       </p>
 
-      {/* Deal value + content formats (only if strategy exists) */}
-      {strategy && (
+      {/* Deal value + content formats (only if selected and strategy exists) */}
+      {selected !== false && strategy && (
         <div className="mb-3 space-y-2">
           <div className="flex items-baseline gap-2">
             <span className="text-xs text-muted">What you could earn</span>
@@ -210,8 +231,8 @@ export default function BrandCard({
         </motion.div>
       )}
 
-      {/* Strategy section */}
-      {strategy && (
+      {/* Strategy section — only when selected */}
+      {selected !== false && strategy && (
         <div className="mt-3 space-y-3 border-t border-white/[0.04] pt-3">
           {/* Pitch angle */}
           <div>

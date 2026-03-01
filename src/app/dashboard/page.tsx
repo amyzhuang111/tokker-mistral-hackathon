@@ -12,6 +12,8 @@ import {
   ChevronDown,
   ChevronUp,
   X,
+  CheckSquare,
+  Square,
 } from "lucide-react";
 import BrandCard, {
   type Brand,
@@ -43,7 +45,34 @@ export default function Dashboard() {
   const [showStrategy, setShowStrategy] = useState(true);
   const [hasAnimatedConfetti, setHasAnimatedConfetti] = useState(false);
   const [enriching, setEnriching] = useState(false);
+  const [selectedBrands, setSelectedBrands] = useState<Set<string>>(new Set());
   const router = useRouter();
+
+  function autoSelectTop3(brands: Brand[]) {
+    const top = [...brands]
+      .sort((a, b) => b.fitScore - a.fitScore)
+      .slice(0, 3)
+      .map((b) => b.domain);
+    setSelectedBrands(new Set(top));
+  }
+
+  function toggleBrand(domain: string) {
+    setSelectedBrands((prev) => {
+      const next = new Set(prev);
+      if (next.has(domain)) next.delete(domain);
+      else next.add(domain);
+      return next;
+    });
+  }
+
+  function toggleAllBrands() {
+    if (!data) return;
+    if (selectedBrands.size === data.brands.length) {
+      setSelectedBrands(new Set());
+    } else {
+      setSelectedBrands(new Set(data.brands.map((b) => b.domain)));
+    }
+  }
   const { ready, authenticated, user, logout } = usePrivy();
 
   const tiktokHandle = user?.tiktok?.username;
@@ -60,7 +89,9 @@ export default function Dashboard() {
 
     const stored = sessionStorage.getItem("tokker_enrichment");
     if (stored) {
-      setData(JSON.parse(stored));
+      const parsed: EnrichmentData = JSON.parse(stored);
+      setData(parsed);
+      autoSelectTop3(parsed.brands);
       const storedStrategy = sessionStorage.getItem("tokker_strategy");
       if (storedStrategy) {
         setStrategyResult(JSON.parse(storedStrategy));
@@ -81,12 +112,13 @@ export default function Dashboard() {
           if (!res.ok) throw new Error("Enrichment failed");
           return res.json();
         })
-        .then((enrichData) => {
+        .then((enrichData: EnrichmentData) => {
           sessionStorage.setItem(
             "tokker_enrichment",
             JSON.stringify(enrichData)
           );
           setData(enrichData);
+          autoSelectTop3(enrichData.brands);
           setEnriching(false);
         })
         .catch(() => {
@@ -102,6 +134,8 @@ export default function Dashboard() {
 
   async function handleMarketingRequest(request: string) {
     if (!data) return;
+    const brandsToSend = data.brands.filter((b) => selectedBrands.has(b.domain));
+    if (brandsToSend.length === 0) return;
     setAgentLoading(true);
     setAgentError(null);
 
@@ -111,7 +145,7 @@ export default function Dashboard() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           creator: data.creator,
-          brands: data.brands,
+          brands: brandsToSend,
           marketingRequest: request,
         }),
       });
@@ -221,10 +255,25 @@ export default function Dashboard() {
 
       {/* Marketing request */}
       <div className="mb-6 rounded-2xl border border-white/[0.06] bg-surface-1 p-5">
-        <MarketingRequest
-          onSubmit={handleMarketingRequest}
-          loading={agentLoading}
-        />
+        {selectedBrands.size === 0 ? (
+          <p className="py-2 text-center text-sm text-muted">
+            Select brands above, then describe your campaign
+          </p>
+        ) : (
+          <>
+            <p className="mb-3 text-xs text-muted">
+              Writing pitches for{" "}
+              <span className="font-semibold text-brand">
+                {selectedBrands.size} of {data.brands.length}
+              </span>{" "}
+              brand{selectedBrands.size !== 1 && "s"}
+            </p>
+            <MarketingRequest
+              onSubmit={handleMarketingRequest}
+              loading={agentLoading}
+            />
+          </>
+        )}
         {agentError && (
           <motion.div
             initial={{ opacity: 0 }}
@@ -284,12 +333,27 @@ export default function Dashboard() {
         </button>
       )}
 
-      {/* Brand cards header with filter tabs */}
+      {/* Brand cards header with filter tabs + select all */}
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-sm font-bold text-white">
-          {sortedBrands.length} brand
-          {sortedBrands.length !== 1 && "s"} found
-        </h2>
+        <div className="flex items-center gap-3">
+          <h2 className="text-sm font-bold text-white">
+            {sortedBrands.length} brand
+            {sortedBrands.length !== 1 && "s"} found
+          </h2>
+          <button
+            onClick={toggleAllBrands}
+            className="flex items-center gap-1.5 text-xs text-muted transition hover:text-white"
+          >
+            {selectedBrands.size === data.brands.length ? (
+              <CheckSquare className="h-3.5 w-3.5" />
+            ) : (
+              <Square className="h-3.5 w-3.5" />
+            )}
+            {selectedBrands.size === data.brands.length
+              ? "Deselect all"
+              : "Select all"}
+          </button>
+        </div>
         <div className="flex gap-1 rounded-xl bg-surface-1 p-1">
           {(
             [
@@ -321,6 +385,8 @@ export default function Dashboard() {
             brand={brand}
             strategy={strategyMap.get(brand.domain)}
             index={i}
+            selected={selectedBrands.has(brand.domain)}
+            onToggle={() => toggleBrand(brand.domain)}
           />
         ))}
       </div>

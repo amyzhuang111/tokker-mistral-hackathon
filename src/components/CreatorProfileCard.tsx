@@ -81,9 +81,6 @@ export default function CreatorProfileCard({
       return;
     }
 
-    // Only call if we have rich data
-    if (!creator.bio && !creator.engagementRate) return;
-
     setSummaryLoading(true);
     fetch("/api/summarize", {
       method: "POST",
