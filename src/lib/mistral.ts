@@ -41,102 +41,6 @@ export interface PRStrategyResult {
 }
 
 /**
- * Tool definitions for the Mistral function-calling agent.
- * The agent uses these to structure its analysis at each step.
- */
-const tools = [
-  {
-    type: "function" as const,
-    function: {
-      name: "analyze_creator_brand_fit",
-      description:
-        "Analyze the fit between a creator and a specific brand using Clay enrichment data. Returns a structured pitch angle and strategy for that brand.",
-      parameters: {
-        type: "object" as const,
-        properties: {
-          brand_name: {
-            type: "string",
-            description: "Name of the brand being analyzed",
-          },
-          brand_domain: {
-            type: "string",
-            description: "Domain of the brand",
-          },
-          pitch_angle: {
-            type: "string",
-            description:
-              "The primary angle for why this creator-brand partnership works. Should reference specific data points from the enrichment.",
-          },
-          content_formats: {
-            type: "array",
-            items: { type: "string" },
-            description:
-              "Recommended content formats (e.g., product review, workout integration, day-in-my-life, tutorial)",
-          },
-          talking_points: {
-            type: "array",
-            items: { type: "string" },
-            description:
-              "3-5 specific talking points the creator should hit in the pitch",
-          },
-          pitch_script: {
-            type: "string",
-            description:
-              "A ready-to-send pitch message (2-3 paragraphs) from the creator to the brand's marketing team. Professional but personal.",
-          },
-          subject_line: {
-            type: "string",
-            description: "Email subject line for the outreach",
-          },
-          estimated_value: {
-            type: "string",
-            description:
-              "Estimated deal value range based on creator's audience size and brand's typical influencer spend",
-          },
-        },
-        required: [
-          "brand_name",
-          "brand_domain",
-          "pitch_angle",
-          "content_formats",
-          "talking_points",
-          "pitch_script",
-          "subject_line",
-          "estimated_value",
-        ],
-      },
-    },
-  },
-  {
-    type: "function" as const,
-    function: {
-      name: "compile_pr_strategy",
-      description:
-        "Compile the overall PR strategy summary after analyzing all brands. Provides the creator with a high-level game plan.",
-      parameters: {
-        type: "object" as const,
-        properties: {
-          overall_strategy: {
-            type: "string",
-            description:
-              "2-3 paragraph executive summary of the PR strategy. Covers the creator's positioning, target verticals, outreach timeline, and expected outcomes.",
-          },
-        },
-        required: ["overall_strategy"],
-      },
-    },
-  },
-];
-
-/**
- * Run the Mistral orchestrator agent.
- *
- * The agent receives the creator profile, Clay enrichment data, and
- * the marketing request. It uses function calling to:
- *   1. Analyze each brand's fit and generate a personalized pitch
- *   2. Compile an overall PR strategy
- */
-/**
  * Use Mistral to discover contextually relevant brands for a TikTok creator.
  * Infers the creator's likely niche from their handle and generates 5 realistic
  * brand matches — returned in the same shape as Clay enrichment data.
@@ -222,12 +126,10 @@ Rules:
 }
 
 /**
- * Run the Mistral orchestrator agent.
+ * Run the Mistral PR strategy agent in a single API call.
  *
- * The agent receives the creator profile, Clay enrichment data, and
- * the marketing request. It uses function calling to:
- *   1. Analyze each brand's fit and generate a personalized pitch
- *   2. Compile an overall PR strategy
+ * Uses JSON response mode instead of a sequential tool-calling loop,
+ * reducing latency from 6+ round trips to just 1.
  */
 export async function runAgent(
   creator: CreatorProfile,
@@ -241,15 +143,41 @@ export async function runAgent(
     )
     .join("\n");
 
-  const systemPrompt = `You are Tokker, an expert AI PR agent for TikTok creators. Your job is to craft hyper-personalized brand outreach strategies.
+  const response = await client.chat.complete({
+    model: MODEL,
+    messages: [
+      {
+        role: "system",
+        content: `You are Tokker, an expert AI PR agent for TikTok creators. Craft hyper-personalized brand outreach strategies.
 
-You have access to Clay-enriched data on brands that match this creator. Your task:
-1. For EACH brand, call the "analyze_creator_brand_fit" tool with a tailored pitch strategy. Reference specific enrichment data (funding rounds, hiring signals, recent news) to make the pitch compelling and data-driven.
-2. After analyzing ALL brands, call "compile_pr_strategy" with an overall strategy summary.
+Return ONLY valid JSON with this exact structure (no markdown, no code fences):
+{
+  "overallStrategy": "2-3 paragraph executive summary covering positioning, target verticals, outreach timeline, and expected outcomes.",
+  "brandStrategies": [
+    {
+      "brandName": "Brand Name",
+      "brandDomain": "brand.com",
+      "pitchAngle": "Primary angle for why this partnership works — reference specific enrichment data points.",
+      "contentFormats": ["format1", "format2"],
+      "talkingPoints": ["point1", "point2", "point3"],
+      "pitchScript": "Ready-to-send 2-3 paragraph pitch from the creator to the brand's marketing team. Professional but personal.",
+      "subjectLine": "Email subject line for outreach",
+      "estimatedValue": "$X,XXX - $XX,XXX"
+    }
+  ]
+}
 
-Be specific, actionable, and reference real data points. Avoid generic advice. Each pitch should feel like it was written by someone who deeply researched both the creator and the brand.`;
-
-  const userMessage = `## Creator Profile
+Rules:
+- Generate a strategy for EVERY brand in the enrichment data
+- Reference specific data points (funding, hiring signals, recent news) in each pitch
+- Each pitch should feel deeply researched — avoid generic advice
+- Pitch scripts should be ready to copy-paste into an email
+- Estimated values should be realistic for the creator's audience size
+- Content formats should match the creator's existing content style`,
+      },
+      {
+        role: "user",
+        content: `## Creator Profile
 - Handle: @${creator.handle}
 - Followers: ${creator.followers}
 - Niche: ${creator.niche}
@@ -260,104 +188,33 @@ Be specific, actionable, and reference real data points. Avoid generic advice. E
 ${marketingRequest}
 
 ## Enriched Brand Matches (from Clay)
-${brandList}
+${brandList}`,
+      },
+    ],
+    responseFormat: { type: "json_object" },
+  });
 
-Please analyze each brand and generate personalized pitch strategies, then compile the overall PR strategy.`;
+  const content = response.choices?.[0]?.message?.content;
+  if (!content) throw new Error("Mistral returned empty response");
 
-  const brandStrategies: BrandStrategy[] = [];
-  let overallStrategy = "";
+  const parsed = JSON.parse(typeof content === "string" ? content : String(content));
 
-  // Run the agent loop with function calling
-  let messages: Array<{
-    role: "system" | "user" | "assistant" | "tool";
-    content: string;
-    tool_call_id?: string;
-  }> = [
-    { role: "system", content: systemPrompt },
-    { role: "user", content: userMessage },
-  ];
+  const brandStrategies: BrandStrategy[] = (parsed.brandStrategies ?? []).map(
+    (s: Record<string, unknown>) => ({
+      brandName: String(s.brandName ?? "Unknown"),
+      brandDomain: String(s.brandDomain ?? ""),
+      pitchAngle: String(s.pitchAngle ?? ""),
+      contentFormats: Array.isArray(s.contentFormats) ? s.contentFormats.map(String) : [],
+      talkingPoints: Array.isArray(s.talkingPoints) ? s.talkingPoints.map(String) : [],
+      pitchScript: String(s.pitchScript ?? ""),
+      subjectLine: String(s.subjectLine ?? ""),
+      estimatedValue: String(s.estimatedValue ?? ""),
+    })
+  );
 
-  // Allow up to 15 iterations for the agent loop (one per brand + final summary + safety margin)
-  for (let i = 0; i < 15; i++) {
-    const response = await client.chat.complete({
-      model: MODEL,
-      messages,
-      tools,
-      toolChoice: "auto" as unknown as undefined,
-    });
-
-    const choice = response.choices?.[0];
-    if (!choice) break;
-
-    const assistantMessage = choice.message;
-
-    // Add assistant message to conversation
-    messages.push({
-      role: "assistant",
-      content: assistantMessage.content?.toString() ?? "",
-    });
-
-    // If no tool calls, the agent is done
-    if (
-      !assistantMessage.toolCalls ||
-      assistantMessage.toolCalls.length === 0
-    ) {
-      break;
-    }
-
-    // Process each tool call
-    for (const toolCall of assistantMessage.toolCalls) {
-      const fn = toolCall.function;
-      const args = JSON.parse(
-        typeof fn.arguments === "string"
-          ? fn.arguments
-          : JSON.stringify(fn.arguments)
-      );
-
-      if (fn.name === "analyze_creator_brand_fit") {
-        brandStrategies.push({
-          brandName: args.brand_name,
-          brandDomain: args.brand_domain,
-          pitchAngle: args.pitch_angle,
-          contentFormats: args.content_formats,
-          talkingPoints: args.talking_points,
-          pitchScript: args.pitch_script,
-          subjectLine: args.subject_line,
-          estimatedValue: args.estimated_value,
-        });
-
-        messages.push({
-          role: "tool",
-          content: JSON.stringify({
-            status: "success",
-            message: `Pitch strategy for ${args.brand_name} saved.`,
-          }),
-          tool_call_id: toolCall.id,
-        });
-      } else if (fn.name === "compile_pr_strategy") {
-        overallStrategy = args.overall_strategy;
-
-        messages.push({
-          role: "tool",
-          content: JSON.stringify({
-            status: "success",
-            message: "Overall PR strategy compiled.",
-          }),
-          tool_call_id: toolCall.id,
-        });
-      }
-    }
-
-    // If the model finished (stop), break
-    if (choice.finishReason === "stop") {
-      break;
-    }
-  }
-
-  // Fallback if agent didn't produce a strategy summary
-  if (!overallStrategy && brandStrategies.length > 0) {
-    overallStrategy = `PR strategy generated for @${creator.handle} targeting ${brandStrategies.length} brands across ${[...new Set(brandStrategies.map((b) => b.brandName))].join(", ")}. Review the individual pitch strategies below and prioritize outreach based on fit score.`;
-  }
+  const overallStrategy =
+    String(parsed.overallStrategy ?? "") ||
+    `PR strategy generated for @${creator.handle} targeting ${brandStrategies.length} brands across ${[...new Set(brandStrategies.map((b) => b.brandName))].join(", ")}.`;
 
   return { overallStrategy, brandStrategies };
 }

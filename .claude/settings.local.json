@@ -36,10 +36,6 @@
       "Bash(python3:*)",
       "Bash(node:*)",
       "Bash(npm test:*)",
-      "Bash(cd \"/mnt/c/Users/win/OneDrive/Desktop/Coding Projects/Tokker/tokker-mistral-hackathon\" && git add src/app/api/clay-callback/route.ts && git rebase --continue --no-edit 2>&1)",
-      "Bash(cd \"/mnt/c/Users/win/OneDrive/Desktop/Coding Projects/Tokker/tokker-mistral-hackathon\" && GIT_EDITOR=true git rebase --continue 2>&1)",
-      "Bash(cd \"/mnt/c/Users/win/OneDrive/Desktop/Coding Projects/Tokker/tokker-mistral-hackathon\" && git add src/app/api/clay-callback/route.ts && GIT_EDITOR=true git rebase --continue 2>&122)",
-      "Bash(cd \"/mnt/c/Users/win/OneDrive/Desktop/Coding Projects/Tokker/tokker-mistral-hackathon\" && git add -A && GIT_EDITOR=true git rebase --continue 2>&1)",
       "Bash(gh api:*)",
       "Bash(npx next:*)",
       "Bash(npm ls:*)",
@@ -48,7 +44,14 @@
       "WebFetch(domain:docs.modash.io)",
       "WebFetch(domain:help.modash.io)",
       "Bash(git pull:*)",
-      "Bash(git:*)"
+      "Bash(git:*)",
+      "Bash(cd \"/mnt/c/Users/win/OneDrive/Desktop/Coding Projects/Tokker/tokker-mistral-hackathon\" && npm install --save-dev @types/canvas-confetti 2>&12)",
+      "Bash(cd \"/mnt/c/Users/win/OneDrive/Desktop/Coding Projects/Tokker/tokker-mistral-hackathon\" && git pull --rebase 2>&1)",
+      "Bash(cd \"/mnt/c/Users/win/OneDrive/Desktop/Coding Projects/Tokker/tokker-mistral-hackathon\" && git stash && git pull --rebase && git stash pop 2>&1)",
+      "Bash(cd \"/mnt/c/Users/win/OneDrive/Desktop/Coding Projects/Tokker/tokker-mistral-hackathon\" && git push 2>&1)",
+      "Bash(tail:*)",
+      "Bash(head:*)",
+      "Bash(cd \"/mnt/c/Users/win/OneDrive/Desktop/Coding Projects/Tokker/tokker-mistral-hackathon\" && git add .claude/settings.local.json && GIT_EDITOR=true git rebase --continue 2>&1)"
     ]
   }
 }
