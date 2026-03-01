@@ -39,7 +39,16 @@
       "Bash(cd \"/mnt/c/Users/win/OneDrive/Desktop/Coding Projects/Tokker/tokker-mistral-hackathon\" && git add src/app/api/clay-callback/route.ts && git rebase --continue --no-edit 2>&1)",
       "Bash(cd \"/mnt/c/Users/win/OneDrive/Desktop/Coding Projects/Tokker/tokker-mistral-hackathon\" && GIT_EDITOR=true git rebase --continue 2>&1)",
       "Bash(cd \"/mnt/c/Users/win/OneDrive/Desktop/Coding Projects/Tokker/tokker-mistral-hackathon\" && git add src/app/api/clay-callback/route.ts && GIT_EDITOR=true git rebase --continue 2>&122)",
-      "Bash(cd \"/mnt/c/Users/win/OneDrive/Desktop/Coding Projects/Tokker/tokker-mistral-hackathon\" && git add -A && GIT_EDITOR=true git rebase --continue 2>&1)"
+      "Bash(cd \"/mnt/c/Users/win/OneDrive/Desktop/Coding Projects/Tokker/tokker-mistral-hackathon\" && git add -A && GIT_EDITOR=true git rebase --continue 2>&1)",
+      "Bash(gh api:*)",
+      "Bash(npx next:*)",
+      "Bash(npm ls:*)",
+      "Bash(source:*)",
+      "Bash(curl:*)",
+      "WebFetch(domain:docs.modash.io)",
+      "WebFetch(domain:help.modash.io)",
+      "Bash(git pull:*)",
+      "Bash(git:*)"
     ]
   }
 }

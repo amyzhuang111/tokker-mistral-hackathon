@@ -29,6 +29,16 @@ export interface ClayEnrichmentInput {
   niche_description?: string;
 }
 
+/** Sanitize handle input — accept "@handle", bare handle, or full TikTok URL */
+function extractHandle(input: string): string {
+  const trimmed = input.trim();
+  // Full URL: https://www.tiktok.com/@handle?lang=en
+  const urlMatch = trimmed.match(/tiktok\.com\/@([^?/]+)/);
+  if (urlMatch) return urlMatch[1];
+  // Strip leading @
+  return trimmed.replace(/^@/, "");
+}
+
 export interface ClayBrand {
   name: string;
   domain: string;
@@ -41,14 +51,28 @@ export interface ClayBrand {
   fitReason: string;
 }
 
+export interface ClayCreator {
+  handle: string;
+  followers: string;
+  niche: string;
+  avgViews: string;
+  topContentThemes: string[];
+  // Modash-enriched fields (optional — populated when Clay returns them)
+  bio?: string;
+  engagementRate?: number;
+  avgLikes?: number;
+  avgComments?: number;
+  postsCount?: number;
+  gender?: string;
+  country?: string;
+  city?: string;
+  isVerified?: boolean;
+  contacts?: string[];
+  paidPostPerformance?: number;
+}
+
 export interface ClayEnrichmentResult {
-  creator: {
-    handle: string;
-    followers: string;
-    niche: string;
-    avgViews: string;
-    topContentThemes: string[];
-  };
+  creator: ClayCreator;
   brands: ClayBrand[];
 }
 
@@ -98,9 +122,12 @@ export async function triggerClayEnrichment(
 ): Promise<{ mode: "async"; requestId: string } | { mode: "sync"; data: ClayEnrichmentResult }> {
   cleanupStore();
 
+  const handle = extractHandle(input.tiktok_handle);
+  const tiktokUrl = `https://www.tiktok.com/@${handle}`;
+
   if (!CLAY_WEBHOOK_URL) {
     console.log("CLAY_WEBHOOK_URL not set — using Mistral brand discovery");
-    return mistralFallback(input.tiktok_handle);
+    return mistralFallback(handle);
   }
 
   const requestId = randomUUID();
@@ -119,7 +146,8 @@ export async function triggerClayEnrichment(
       headers,
       body: JSON.stringify({
         request_id: requestId,
-        tiktok_handle: input.tiktok_handle,
+        tiktok_handle: handle,
+        tiktok_url: tiktokUrl,
         niche_description: input.niche_description ?? "",
         callback_url: `${CALLBACK_BASE_URL}/api/clay-callback`,
       }),
@@ -128,7 +156,7 @@ export async function triggerClayEnrichment(
     if (!res.ok) {
       enrichmentStore.delete(requestId);
       console.warn(`Clay webhook returned ${res.status} — falling back to Mistral`);
-      return mistralFallback(input.tiktok_handle);
+      return mistralFallback(handle);
     }
 
     // Some Clay setups return enriched data synchronously in the response
@@ -144,7 +172,7 @@ export async function triggerClayEnrichment(
         }
         // If Clay returned partial data or just an ack, check for enriched fields
         if (responseData.brands || responseData.results) {
-          const result = normalizeClayResponse(responseData, input.tiktok_handle);
+          const result = normalizeClayResponse(responseData, handle);
           completeRequest(requestId, result);
           return { mode: "sync", data: result };
         }
@@ -158,8 +186,15 @@ export async function triggerClayEnrichment(
   } catch (err) {
     enrichmentStore.delete(requestId);
     console.warn("Clay webhook failed — falling back to Mistral:", err);
-    return mistralFallback(input.tiktok_handle);
+    return mistralFallback(handle);
   }
+}
+
+/** Safely coerce to number or return undefined */
+function toNum(val: unknown): number | undefined {
+  if (val == null) return undefined;
+  const n = Number(val);
+  return Number.isNaN(n) ? undefined : n;
 }
 
 /**
@@ -184,16 +219,29 @@ export function normalizeClayResponse(raw: any, handle: string): ClayEnrichmentR
     });
   }
 
-  return {
-    creator: {
-      handle,
-      followers: raw.creator?.followers ?? raw.followers ?? "N/A",
-      niche: raw.creator?.niche ?? raw.niche ?? "N/A",
-      avgViews: raw.creator?.avgViews ?? raw.avg_views ?? "N/A",
-      topContentThemes: raw.creator?.topContentThemes ?? raw.themes ?? [],
-    },
-    brands,
+  // Build creator profile — merge nested creator object, flat fields, and Modash fields
+  const c = raw.creator ?? {};
+  const creator: ClayCreator = {
+    handle,
+    followers: c.followers ?? raw.followers ?? raw.followersCount ?? "N/A",
+    niche: c.niche ?? raw.niche ?? raw.interests?.[0] ?? "N/A",
+    avgViews: c.avgViews ?? raw.avg_views ?? raw.avgViews ?? "N/A",
+    topContentThemes: c.topContentThemes ?? raw.themes ?? raw.interests ?? [],
+    // Modash fields
+    bio: c.bio ?? raw.bio ?? undefined,
+    engagementRate: toNum(c.engagementRate ?? raw.engagementRate ?? raw.engagement_rate),
+    avgLikes: toNum(c.avgLikes ?? raw.avgLikes ?? raw.avg_likes),
+    avgComments: toNum(c.avgComments ?? raw.avgComments ?? raw.avg_comments),
+    postsCount: toNum(c.postsCount ?? raw.postsCount ?? raw.posts_count),
+    gender: c.gender ?? raw.gender ?? undefined,
+    country: c.country ?? raw.country ?? undefined,
+    city: c.city ?? raw.city ?? undefined,
+    isVerified: c.isVerified ?? raw.isVerified ?? raw.is_verified ?? undefined,
+    contacts: c.contacts ?? raw.contacts ?? undefined,
+    paidPostPerformance: toNum(c.paidPostPerformance ?? raw.paidPostPerformance ?? raw.paid_post_performance),
   };
+
+  return { creator, brands };
 }
 
 /**
