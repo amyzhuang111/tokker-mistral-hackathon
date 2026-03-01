@@ -220,7 +220,7 @@ export function normalizeClayResponse(raw: any, handle: string): ClayEnrichmentR
   }
 
   // Clay sends Modash data under `influencer_details` — flatten it into the lookup chain
-  const inf = raw.influencer_details ?? raw.influencerDetails ?? {};
+  const inf = raw.influencer_details ?? raw.influencer_data ?? raw.influencerDetails ?? {};
   const profile = inf.profile ?? inf;
   const c = raw.creator ?? {};
 
