@@ -51,6 +51,17 @@ export interface ClayBrand {
   fitReason: string;
 }
 
+export interface AudienceBucket {
+  code: string;
+  name?: string;
+  weight: number;
+}
+
+export interface ContactInfo {
+  type: string;
+  value: string;
+}
+
 export interface ClayCreator {
   handle: string;
   followers: string;
@@ -58,17 +69,29 @@ export interface ClayCreator {
   avgViews: string;
   topContentThemes: string[];
   // Modash-enriched fields (optional — populated when Clay returns them)
+  fullname?: string;
+  picture?: string;
   bio?: string;
+  email?: string;
   engagementRate?: number;
   avgLikes?: number;
   avgComments?: number;
+  totalLikes?: number;
   postsCount?: number;
   gender?: string;
   country?: string;
   city?: string;
+  ageGroup?: string;
   isVerified?: boolean;
-  contacts?: string[];
+  contacts?: ContactInfo[];
   paidPostPerformance?: number;
+  sponsoredPostsMedianViews?: number;
+  nonSponsoredPostsMedianViews?: number;
+  hashtags?: { tag: string; weight: number }[];
+  audienceGenders?: AudienceBucket[];
+  audienceAges?: AudienceBucket[];
+  audienceCountries?: AudienceBucket[];
+  audienceLanguages?: AudienceBucket[];
 }
 
 export interface ClayEnrichmentResult {
@@ -197,6 +220,13 @@ function toNum(val: unknown): number | undefined {
   return Number.isNaN(n) ? undefined : n;
 }
 
+/** Format a number as a compact string (294300 → "294.3K") */
+function formatCount(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
+  return String(n);
+}
+
 /**
  * Normalize various Clay response shapes into our standard format.
  */
@@ -219,29 +249,65 @@ export function normalizeClayResponse(raw: any, handle: string): ClayEnrichmentR
     });
   }
 
-  // Clay sends Modash data under `influencer_details` — flatten it into the lookup chain
-  const inf = raw.influencer_details ?? raw.influencer_data ?? raw.influencerDetails ?? {};
-  const profile = inf.profile ?? inf;
+  // Clay sends Modash data under `influencer_data` (or `influencer_details`)
+  const inf = raw.influencer_data ?? raw.influencer_details ?? raw.influencerDetails ?? {};
+  const profile = inf.profile ?? {};
+  const audience = inf.audience ?? {};
   const c = raw.creator ?? {};
 
+  // Format follower count nicely (294300 → "294.3K")
+  const rawFollowers = c.followers ?? profile.followers ?? profile.followersCount ?? inf.followers ?? raw.followers;
+  const followersStr = typeof rawFollowers === "number" ? formatCount(rawFollowers) : (rawFollowers ?? "N/A");
+
+  const rawAvgViews = c.avgViews ?? profile.averageViews ?? profile.avgViews ?? inf.avgViews ?? raw.avg_views;
+  const avgViewsStr = typeof rawAvgViews === "number" ? formatCount(rawAvgViews) : (rawAvgViews ?? "N/A");
+
+  // Extract hashtags as content themes if available
+  const hashtags: { tag: string; weight: number }[] = Array.isArray(inf.hashtags) ? inf.hashtags : [];
+  const topThemes = c.topContentThemes
+    ?? raw.themes
+    ?? (audience.interests?.length ? audience.interests.map((i: { name?: string }) => i.name).filter(Boolean) : undefined)
+    ?? (hashtags.length ? hashtags.slice(0, 5).map((h) => h.tag) : []);
+
+  // Normalize contacts from [{type, value}] format
+  const rawContacts = inf.contacts ?? raw.contacts;
+  const contacts: ContactInfo[] | undefined = Array.isArray(rawContacts)
+    ? rawContacts.map((c: { type?: string; value?: string }) => ({
+        type: c.type ?? "other",
+        value: c.value ?? "",
+      }))
+    : undefined;
+
   const creator: ClayCreator = {
-    handle,
-    followers: c.followers ?? profile.followers ?? profile.followersCount ?? raw.followers ?? "N/A",
-    niche: c.niche ?? raw.niche ?? profile.interests?.[0] ?? "N/A",
-    avgViews: c.avgViews ?? raw.avg_views ?? profile.avgViews ?? "N/A",
-    topContentThemes: c.topContentThemes ?? raw.themes ?? profile.interests ?? [],
-    // Modash / influencer_details fields
-    bio: c.bio ?? profile.bio ?? raw.bio ?? undefined,
-    engagementRate: toNum(profile.engagementRate ?? profile.engagement_rate ?? raw.engagementRate),
-    avgLikes: toNum(profile.avgLikes ?? profile.avg_likes ?? raw.avgLikes),
-    avgComments: toNum(profile.avgComments ?? profile.avg_comments ?? raw.avgComments),
-    postsCount: toNum(profile.postsCount ?? profile.posts_count ?? raw.postsCount),
-    gender: profile.gender ?? raw.gender ?? undefined,
-    country: profile.country ?? raw.country ?? undefined,
-    city: profile.city ?? raw.city ?? undefined,
-    isVerified: profile.isVerified ?? profile.is_verified ?? raw.isVerified ?? undefined,
-    contacts: profile.contacts ?? raw.contacts ?? undefined,
-    paidPostPerformance: toNum(profile.paidPostPerformance ?? profile.paid_post_performance ?? raw.paidPostPerformance),
+    handle: handle || profile.username || inf.handle || "",
+    followers: followersStr,
+    niche: c.niche ?? raw.niche ?? (hashtags.length ? hashtags[0].tag : "N/A"),
+    avgViews: avgViewsStr,
+    topContentThemes: topThemes,
+    // Modash profile fields
+    fullname: c.fullname ?? profile.fullname ?? inf.fullname ?? undefined,
+    picture: profile.picture ?? inf.picture ?? undefined,
+    bio: c.bio ?? inf.bio ?? profile.bio ?? raw.bio ?? undefined,
+    email: inf.email ?? raw.email ?? contacts?.find((c) => c.type === "email")?.value ?? undefined,
+    engagementRate: toNum(profile.engagementRate ?? profile.engagement_rate ?? inf.engagementRate),
+    avgLikes: toNum(inf.avgLikes ?? profile.avgLikes ?? raw.avgLikes),
+    avgComments: toNum(inf.avgComments ?? profile.avgComments ?? raw.avgComments),
+    totalLikes: toNum(inf.totalLikes ?? profile.totalLikes ?? raw.totalLikes),
+    postsCount: toNum(inf.postsCount ?? profile.postsCount ?? raw.postsCount),
+    gender: inf.gender ?? profile.gender ?? raw.gender ?? undefined,
+    country: inf.country ?? profile.country ?? raw.country ?? undefined,
+    city: inf.city ?? profile.city ?? raw.city ?? undefined,
+    ageGroup: inf.ageGroup ?? raw.ageGroup ?? undefined,
+    isVerified: inf.isVerified ?? profile.isVerified ?? raw.isVerified ?? undefined,
+    contacts,
+    paidPostPerformance: toNum(inf.paidPostPerformance ?? raw.paidPostPerformance),
+    sponsoredPostsMedianViews: toNum(inf.sponsoredPostsMedianViews ?? raw.sponsoredPostsMedianViews),
+    nonSponsoredPostsMedianViews: toNum(inf.nonSponsoredPostsMedianViews ?? raw.nonSponsoredPostsMedianViews),
+    hashtags: hashtags.length ? hashtags : undefined,
+    audienceGenders: Array.isArray(audience.genders) ? audience.genders : undefined,
+    audienceAges: Array.isArray(audience.ages) ? audience.ages : undefined,
+    audienceCountries: Array.isArray(audience.geoCountries) ? audience.geoCountries : undefined,
+    audienceLanguages: Array.isArray(audience.languages) ? audience.languages : undefined,
   };
 
   return { creator, brands };

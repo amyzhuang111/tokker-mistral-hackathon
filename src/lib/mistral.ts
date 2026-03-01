@@ -1,4 +1,5 @@
 import { Mistral } from "@mistralai/mistralai";
+import type { ClayCreator } from "./clay";
 
 const client = new Mistral({ apiKey: process.env.MISTRAL_API_KEY ?? "" });
 
@@ -10,6 +11,13 @@ export interface CreatorProfile {
   niche: string;
   avgViews: string;
   topContentThemes: string[];
+}
+
+export interface CreatorSummary {
+  summary: string;
+  tags: string[];
+  insights: string[];
+  nicheSuggestion: string;
 }
 
 export interface BrandEnrichment {
@@ -217,4 +225,78 @@ ${brandList}`,
     `PR strategy generated for @${creator.handle} targeting ${brandStrategies.length} brands across ${[...new Set(brandStrategies.map((b) => b.brandName))].join(", ")}.`;
 
   return { overallStrategy, brandStrategies };
+}
+
+/**
+ * Use Mistral to generate an AI summary of a creator's profile.
+ * Takes the rich Modash-enriched creator data and produces:
+ * - A 2-3 sentence summary of who they are
+ * - 5-8 auto-generated tags
+ * - 3-5 key insights for brand partnerships
+ * - A niche suggestion
+ */
+export async function summarizeCreator(creator: ClayCreator): Promise<CreatorSummary> {
+  const topHashtags = creator.hashtags?.slice(0, 10).map((h) => h.tag).join(", ") ?? "N/A";
+  const topCountries = creator.audienceCountries?.slice(0, 5).map((c) => `${c.name ?? c.code} (${(c.weight * 100).toFixed(0)}%)`).join(", ") ?? "N/A";
+  const genderSplit = creator.audienceGenders?.map((g) => `${g.code} ${(g.weight * 100).toFixed(0)}%`).join(", ") ?? "N/A";
+  const ageSplit = creator.audienceAges?.filter((a) => a.weight > 0.05).map((a) => `${a.code}: ${(a.weight * 100).toFixed(0)}%`).join(", ") ?? "N/A";
+
+  const prompt = `You are an influencer marketing analyst. Analyze this TikTok creator's data and provide a structured summary.
+
+## Creator Data
+- Handle: @${creator.handle}
+- Full Name: ${creator.fullname ?? "Unknown"}
+- Bio: ${creator.bio ?? "N/A"}
+- Followers: ${creator.followers}
+- Average Views: ${creator.avgViews}
+- Engagement Rate: ${creator.engagementRate ? (creator.engagementRate * 100).toFixed(2) + "%" : "N/A"}
+- Average Likes: ${creator.avgLikes ?? "N/A"}
+- Total Likes: ${creator.totalLikes ?? "N/A"}
+- Posts Count: ${creator.postsCount ?? "N/A"}
+- Gender: ${creator.gender ?? "N/A"}
+- Country: ${creator.country ?? "N/A"}
+- Age Group: ${creator.ageGroup ?? "N/A"}
+- Top Hashtags: ${topHashtags}
+- Paid Post Performance: ${creator.paidPostPerformance ? (creator.paidPostPerformance * 100).toFixed(1) + "%" : "N/A"}
+- Sponsored Posts Median Views: ${creator.sponsoredPostsMedianViews ?? "N/A"}
+- Non-Sponsored Posts Median Views: ${creator.nonSponsoredPostsMedianViews ?? "N/A"}
+
+## Audience
+- Gender Split: ${genderSplit}
+- Age Distribution: ${ageSplit}
+- Top Countries: ${topCountries}
+
+Return ONLY valid JSON (no markdown, no code fences):
+{
+  "summary": "2-3 sentence summary of the creator — who they are, what they create, and their audience appeal. Be specific and data-driven.",
+  "tags": ["tag1", "tag2", ...],
+  "insights": ["insight1", "insight2", ...],
+  "nicheSuggestion": "A specific niche label that best describes this creator"
+}
+
+Rules:
+- Summary should reference specific metrics (followers, engagement rate, audience demographics)
+- Tags should be 5-8 descriptive labels useful for brand matching (e.g. "Gen-Z Appeal", "Comedy Creator", "NYC Based")
+- Insights should be 3-5 actionable observations about brand partnership potential, referencing data points
+- Keep it concise and professional`;
+
+  const response = await client.chat.complete({
+    model: MODEL,
+    messages: [
+      { role: "user", content: prompt },
+    ],
+    responseFormat: { type: "json_object" },
+  });
+
+  const content = response.choices?.[0]?.message?.content;
+  if (!content) throw new Error("Mistral returned empty response");
+
+  const parsed = JSON.parse(typeof content === "string" ? content : String(content));
+
+  return {
+    summary: parsed.summary ?? "",
+    tags: Array.isArray(parsed.tags) ? parsed.tags : [],
+    insights: Array.isArray(parsed.insights) ? parsed.insights : [],
+    nicheSuggestion: parsed.nicheSuggestion ?? "",
+  };
 }
