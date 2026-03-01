@@ -22,6 +22,7 @@ import BrandCard, {
 import MarketingRequest from "@/components/MarketingRequest";
 import CreatorProfileCard from "@/components/CreatorProfileCard";
 import type { ClayCreator } from "@/lib/clay";
+import type { BrandEnrichment } from "@/lib/mistral";
 
 interface EnrichmentData {
   creator: ClayCreator;
@@ -47,6 +48,20 @@ export default function Dashboard() {
   const [enriching, setEnriching] = useState(false);
   const [selectedBrands, setSelectedBrands] = useState<Set<string>>(new Set());
   const router = useRouter();
+
+  function handleBrandsDiscovered(brands: BrandEnrichment[]) {
+    setData((prev) => {
+      if (!prev) return prev;
+      // Replace brand list with Mistral-suggested brands
+      const updated = { ...prev, brands: brands as Brand[] };
+      sessionStorage.setItem("tokker_enrichment", JSON.stringify(updated));
+      return updated;
+    });
+    autoSelectTop3(brands as Brand[]);
+    // Clear any prior strategy since brands changed
+    setStrategyResult(null);
+    sessionStorage.removeItem("tokker_strategy");
+  }
 
   function autoSelectTop3(brands: Brand[]) {
     const top = [...brands]
@@ -264,7 +279,7 @@ export default function Dashboard() {
 
       {/* Rich creator profile card */}
       <div className="mb-6">
-        <CreatorProfileCard creator={creator} />
+        <CreatorProfileCard creator={creator} onBrandsDiscovered={handleBrandsDiscovered} />
       </div>
 
       {/* Marketing request */}

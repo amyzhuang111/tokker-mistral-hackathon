@@ -15,10 +15,11 @@ import {
   ChevronUp,
 } from "lucide-react";
 import type { ClayCreator } from "@/lib/clay";
-import type { CreatorSummary } from "@/lib/mistral";
+import type { CreatorSummary, BrandEnrichment } from "@/lib/mistral";
 
 interface CreatorProfileCardProps {
   creator: ClayCreator;
+  onBrandsDiscovered?: (brands: BrandEnrichment[]) => void;
 }
 
 function StatCard({
@@ -68,6 +69,7 @@ function AudienceBar({
 
 export default function CreatorProfileCard({
   creator,
+  onBrandsDiscovered,
 }: CreatorProfileCardProps) {
   const [summary, setSummary] = useState<CreatorSummary | null>(null);
   const [summaryLoading, setSummaryLoading] = useState(false);
@@ -80,7 +82,11 @@ export default function CreatorProfileCard({
     const cached = sessionStorage.getItem("tokker_summary");
     const cachedHandle = sessionStorage.getItem("tokker_summary_handle");
     if (cached && cachedHandle === creator.handle) {
-      setSummary(JSON.parse(cached));
+      const parsed: CreatorSummary = JSON.parse(cached);
+      setSummary(parsed);
+      if (parsed.suggestedBrands?.length) {
+        onBrandsDiscovered?.(parsed.suggestedBrands);
+      }
       return;
     }
 
@@ -103,11 +109,14 @@ export default function CreatorProfileCard({
         }
         return res.json();
       })
-      .then((data) => {
+      .then((data: CreatorSummary | null) => {
         if (data) {
           setSummary(data);
           sessionStorage.setItem("tokker_summary", JSON.stringify(data));
           sessionStorage.setItem("tokker_summary_handle", creator.handle);
+          if (data.suggestedBrands?.length) {
+            onBrandsDiscovered?.(data.suggestedBrands);
+          }
         }
       })
       .catch((err) => {

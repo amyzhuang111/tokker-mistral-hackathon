@@ -29,6 +29,7 @@ export interface CreatorSummary {
   tags: string[];
   insights: string[];
   nicheSuggestion: string;
+  suggestedBrands: BrandEnrichment[];
 }
 
 export interface BrandEnrichment {
@@ -282,13 +283,31 @@ Return ONLY valid JSON (no markdown, no code fences):
   "summary": "2-3 sentence summary of the creator — who they are, what they create, and their audience appeal. Be specific and data-driven.",
   "tags": ["tag1", "tag2", ...],
   "insights": ["insight1", "insight2", ...],
-  "nicheSuggestion": "A specific niche label that best describes this creator"
+  "nicheSuggestion": "A specific niche label that best describes this creator",
+  "suggestedBrands": [
+    {
+      "name": "Brand Name",
+      "domain": "brand.com",
+      "industry": "Industry",
+      "description": "What the brand does",
+      "funding": "Funding info or 'N/A'",
+      "headcount": "Employee range or 'N/A'",
+      "recentNews": "Recent relevant news or 'N/A'",
+      "fitScore": 85,
+      "fitReason": "Why this creator and brand are a good match"
+    }
+  ]
 }
 
 Rules:
 - Summary should reference specific metrics (followers, engagement rate, audience demographics)
 - Tags should be 5-8 descriptive labels useful for brand matching (e.g. "Gen-Z Appeal", "Comedy Creator", "NYC Based")
 - Insights should be 3-5 actionable observations about brand partnership potential, referencing data points
+- suggestedBrands should contain 5 REAL brands that would be great partnership matches for this creator
+- Use REAL brands that actually exist — do not invent fictional companies
+- Fit scores should range from 70-95 and vary realistically
+- Fit reasons should reference the creator's content style, audience demographics, and the brand's marketing strategy
+- Include a mix of well-known and emerging brands relevant to the creator's niche
 - Keep it concise and professional`;
 
   const response = await getClient().chat.complete({
@@ -309,5 +328,16 @@ Rules:
     tags: Array.isArray(parsed.tags) ? parsed.tags : [],
     insights: Array.isArray(parsed.insights) ? parsed.insights : [],
     nicheSuggestion: parsed.nicheSuggestion ?? "",
+    suggestedBrands: (parsed.suggestedBrands ?? []).map((b: Record<string, unknown>) => ({
+      name: String(b.name ?? "Unknown"),
+      domain: String(b.domain ?? ""),
+      industry: String(b.industry ?? ""),
+      description: String(b.description ?? ""),
+      funding: String(b.funding ?? "N/A"),
+      headcount: String(b.headcount ?? "N/A"),
+      recentNews: String(b.recentNews ?? "N/A"),
+      fitScore: Number(b.fitScore ?? 75),
+      fitReason: String(b.fitReason ?? ""),
+    })),
   };
 }
