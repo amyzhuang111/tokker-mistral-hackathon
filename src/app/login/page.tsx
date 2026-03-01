@@ -93,7 +93,7 @@ export default function LoginPage() {
           <button
             onClick={() =>
               googleEmail
-                ? router.push("/dashboard")
+                ? router.push("/")
                 : initOAuth({ provider: "google" })
             }
             disabled={!ready}
@@ -117,7 +117,7 @@ export default function LoginPage() {
           <button
             onClick={() =>
               tiktokUsername
-                ? router.push("/dashboard")
+                ? router.push("/")
                 : initOAuth({ provider: "tiktok" })
             }
             disabled={!ready}

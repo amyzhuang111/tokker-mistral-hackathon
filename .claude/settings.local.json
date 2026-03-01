@@ -32,7 +32,12 @@
       "WebFetch(domain:help.modash.io)",
       "Bash(set:*)",
       "WebFetch(domain:elevenlabs.io)",
-      "Bash(sips:*)"
+      "Bash(sips:*)",
+      "WebFetch(domain:docs.metamask.io)",
+      "WebFetch(domain:eips.ethereum.org)",
+      "WebFetch(domain:docs.cdp.coinbase.com)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:metamask.github.io)"
     ]
   }
 }
