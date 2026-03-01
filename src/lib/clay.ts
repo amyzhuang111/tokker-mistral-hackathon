@@ -146,6 +146,13 @@ export async function triggerClayEnrichment(
   cleanupStore();
 
   const handle = extractHandle(input.tiktok_handle);
+
+  // Localhost mode: skip Clay + Mistral entirely, return mock data instantly
+  if (process.env.LOCALHOST === "true") {
+    console.log("LOCALHOST=true — returning mock data");
+    return { mode: "sync", data: getMockEnrichment(handle) };
+  }
+
   const tiktokUrl = `https://www.tiktok.com/@${handle}`;
 
   if (!CLAY_WEBHOOK_URL) {

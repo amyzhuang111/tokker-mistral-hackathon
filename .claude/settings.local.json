@@ -30,7 +30,8 @@
       "WebFetch(domain:support.clay.com)",
       "WebFetch(domain:docs.modash.io)",
       "WebFetch(domain:help.modash.io)",
-      "Bash(set:*)"
+      "Bash(set:*)",
+      "WebFetch(domain:elevenlabs.io)"
     ]
   }
 }

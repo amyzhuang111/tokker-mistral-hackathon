@@ -2,11 +2,10 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { usePrivy } from "@privy-io/react-auth";
+import { usePrivy, useWallets, useCreateWallet } from "@privy-io/react-auth";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
 import {
-  ArrowLeft,
   LogOut,
   Sparkles,
   ChevronDown,
@@ -14,6 +13,9 @@ import {
   X,
   CheckSquare,
   Square,
+  Copy,
+  Check,
+  Wallet,
 } from "lucide-react";
 import BrandCard, {
   type Brand,
@@ -89,6 +91,19 @@ export default function Dashboard() {
     }
   }
   const { ready, authenticated, user, logout } = usePrivy();
+  const { wallets } = useWallets();
+  const { createWallet } = useCreateWallet();
+  const [copied, setCopied] = useState(false);
+  const [creatingWallet, setCreatingWallet] = useState(false);
+
+  const embeddedWallet = wallets.find((w) => w.walletClientType === "privy");
+
+  function copyAddress() {
+    if (!embeddedWallet) return;
+    navigator.clipboard.writeText(embeddedWallet.address);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
 
   const tiktokHandle = user?.tiktok?.username;
 
@@ -256,10 +271,12 @@ export default function Dashboard() {
       <div className="mb-6 flex items-center justify-between">
         <button
           onClick={() => router.push("/")}
-          className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/[0.06] bg-surface-1 text-muted transition hover:text-white"
-          aria-label="Go back"
+          className="flex items-center gap-2"
         >
-          <ArrowLeft className="h-4 w-4" />
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand/10">
+            <Sparkles className="h-4 w-4 text-brand" />
+          </div>
+          <span className="text-sm font-bold text-white">Tokker</span>
         </button>
         <div className="flex items-center gap-2">
           {email && (
@@ -280,6 +297,50 @@ export default function Dashboard() {
       {/* Rich creator profile card */}
       <div className="mb-6">
         <CreatorProfileCard creator={creator} onBrandsDiscovered={handleBrandsDiscovered} />
+      </div>
+
+      {/* Wallet card */}
+      <div className="mb-6 rounded-2xl border border-white/[0.06] bg-surface-1 p-5">
+        <div className="mb-3 flex items-center gap-2">
+          <Wallet className="h-4 w-4 text-brand" />
+          <h3 className="text-sm font-bold text-white">Payout Wallet</h3>
+        </div>
+        {embeddedWallet ? (
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2">
+              <code className="text-sm text-white/70">
+                {embeddedWallet.address.slice(0, 6)}...
+                {embeddedWallet.address.slice(-4)}
+              </code>
+              <button
+                onClick={copyAddress}
+                className="text-muted transition hover:text-white"
+                aria-label="Copy address"
+              >
+                {copied ? (
+                  <Check className="h-3.5 w-3.5 text-success" />
+                ) : (
+                  <Copy className="h-3.5 w-3.5" />
+                )}
+              </button>
+            </div>
+            <span className="rounded-full bg-brand/10 px-2.5 py-0.5 text-xs font-medium text-brand">
+              Base Sepolia
+            </span>
+            <span className="text-sm text-muted">$0.00 USDC</span>
+          </div>
+        ) : (
+          <button
+            onClick={async () => {
+              setCreatingWallet(true);
+              try { await createWallet(); } finally { setCreatingWallet(false); }
+            }}
+            disabled={creatingWallet}
+            className="rounded-xl bg-brand/10 px-4 py-2 text-sm font-medium text-brand transition hover:bg-brand/20 disabled:opacity-50"
+          >
+            {creatingWallet ? "Creating..." : "Create Wallet"}
+          </button>
+        )}
       </div>
 
       {/* Brand cards header with filter tabs + select all */}

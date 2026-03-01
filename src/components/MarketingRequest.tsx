@@ -23,8 +23,10 @@ export default function MarketingRequest({
 }: MarketingRequestProps) {
   const [text, setText] = useState("");
   const [listening, setListening] = useState(false);
+  const [transcribing, setTranscribing] = useState(false);
   const [progressStep, setProgressStep] = useState(0);
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
 
   // Fake progress steps while loading
   useEffect(() => {
@@ -40,54 +42,77 @@ export default function MarketingRequest({
     return () => clearInterval(interval);
   }, [loading]);
 
-  const toggleVoice = useCallback(() => {
+  const toggleVoice = useCallback(async () => {
     if (listening) {
-      recognitionRef.current?.stop();
-      setListening(false);
+      mediaRecorderRef.current?.stop();
       return;
     }
 
-    const SpeechRecognition =
-      window.SpeechRecognition || window.webkitSpeechRecognition;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-    if (!SpeechRecognition) {
-      toast.error("Voice input isn't supported in this browser");
-      return;
+      const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+        ? "audio/webm;codecs=opus"
+        : "audio/webm";
+
+      const recorder = new MediaRecorder(stream, { mimeType });
+      chunksRef.current = [];
+
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunksRef.current.push(e.data);
+      };
+
+      recorder.onstop = async () => {
+        stream.getTracks().forEach((t) => t.stop());
+        setListening(false);
+
+        const blob = new Blob(chunksRef.current, { type: mimeType });
+        if (blob.size === 0) return;
+
+        setTranscribing(true);
+        try {
+          const form = new FormData();
+          form.append("audio", blob, "recording.webm");
+
+          const res = await fetch("/api/transcribe", {
+            method: "POST",
+            body: form,
+          });
+
+          if (!res.ok) throw new Error("Transcription failed");
+
+          const { text: transcribed } = await res.json();
+          if (transcribed) {
+            setText((prev) => (prev ? prev + " " + transcribed : transcribed));
+          }
+        } catch {
+          toast.error("Voice transcription failed — please try again");
+        } finally {
+          setTranscribing(false);
+        }
+      };
+
+      recorder.onerror = () => {
+        stream.getTracks().forEach((t) => t.stop());
+        setListening(false);
+        toast.error("Recording failed");
+      };
+
+      mediaRecorderRef.current = recorder;
+      recorder.start();
+      setListening(true);
+    } catch {
+      toast.error("Microphone access denied");
     }
-
-    const recognition = new SpeechRecognition();
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = "en-US";
-
-    recognition.onresult = (event: SpeechRecognitionEvent) => {
-      let transcript = "";
-      for (let i = 0; i < event.results.length; i++) {
-        transcript += event.results[i][0].transcript;
-      }
-      setText(transcript);
-    };
-
-    recognition.onerror = () => {
-      setListening(false);
-    };
-
-    recognition.onend = () => {
-      setListening(false);
-    };
-
-    recognitionRef.current = recognition;
-    recognition.start();
-    setListening(true);
   }, [listening]);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const trimmed = text.trim();
-    if (!trimmed) return;
+    if (!trimmed || transcribing) return;
     if (listening) {
-      recognitionRef.current?.stop();
-      setListening(false);
+      mediaRecorderRef.current?.stop();
+      return;
     }
     onSubmit(trimmed);
   }
@@ -115,7 +140,7 @@ export default function MarketingRequest({
         <button
           type="button"
           onClick={toggleVoice}
-          disabled={loading}
+          disabled={loading || transcribing}
           aria-label={listening ? "Stop recording" : "Start voice input"}
           className={`absolute right-3 top-3 rounded-xl p-3 transition ${
             listening
@@ -131,35 +156,46 @@ export default function MarketingRequest({
         </button>
       </div>
 
-      {/* Listening indicator */}
+      {/* Listening / transcribing indicator */}
       <AnimatePresence>
-        {listening && (
+        {(listening || transcribing) && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             className="flex items-center gap-3"
           >
-            <div className="flex items-center gap-1">
-              {[...Array(5)].map((_, i) => (
-                <motion.div
-                  key={i}
-                  className="w-1 rounded-full bg-brand"
-                  animate={{
-                    height: [8, 20, 8],
-                  }}
-                  transition={{
-                    repeat: Infinity,
-                    duration: 0.6,
-                    delay: i * 0.1,
-                    ease: "easeInOut",
-                  }}
-                />
-              ))}
-            </div>
-            <span className="text-sm text-brand">
-              Listening — speak your campaign idea
-            </span>
+            {listening ? (
+              <>
+                <div className="flex items-center gap-1">
+                  {[...Array(5)].map((_, i) => (
+                    <motion.div
+                      key={i}
+                      className="w-1 rounded-full bg-brand"
+                      animate={{
+                        height: [8, 20, 8],
+                      }}
+                      transition={{
+                        repeat: Infinity,
+                        duration: 0.6,
+                        delay: i * 0.1,
+                        ease: "easeInOut",
+                      }}
+                    />
+                  ))}
+                </div>
+                <span className="text-sm text-brand">
+                  Listening — speak your campaign idea
+                </span>
+              </>
+            ) : (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin text-brand" />
+                <span className="text-sm text-brand">
+                  Transcribing your recording...
+                </span>
+              </>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
@@ -195,7 +231,7 @@ export default function MarketingRequest({
       ) : (
         <button
           type="submit"
-          disabled={!text.trim()}
+          disabled={!text.trim() || transcribing}
           className="flex items-center justify-center gap-2 rounded-2xl bg-brand py-3.5 text-base font-semibold text-white transition hover:bg-brand/90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-30"
         >
           <Wand2 className="h-4 w-4" />
