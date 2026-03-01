@@ -1,7 +1,18 @@
 import { Mistral } from "@mistralai/mistralai";
 import type { ClayCreator } from "./clay";
 
-const client = new Mistral({ apiKey: process.env.MISTRAL_API_KEY ?? "" });
+let _client: Mistral | null = null;
+
+function getClient(): Mistral {
+  if (!_client) {
+    const apiKey = process.env.MISTRAL_API_KEY;
+    if (!apiKey) {
+      throw new Error("MISTRAL_API_KEY is not set");
+    }
+    _client = new Mistral({ apiKey });
+  }
+  return _client;
+}
 
 const MODEL = "mistral-large-latest";
 
@@ -57,7 +68,7 @@ export async function discoverBrands(handle: string): Promise<{
   creator: CreatorProfile;
   brands: BrandEnrichment[];
 }> {
-  const response = await client.chat.complete({
+  const response = await getClient().chat.complete({
     model: MODEL,
     messages: [
       {
@@ -151,7 +162,7 @@ export async function runAgent(
     )
     .join("\n");
 
-  const response = await client.chat.complete({
+  const response = await getClient().chat.complete({
     model: MODEL,
     messages: [
       {
@@ -280,7 +291,7 @@ Rules:
 - Insights should be 3-5 actionable observations about brand partnership potential, referencing data points
 - Keep it concise and professional`;
 
-  const response = await client.chat.complete({
+  const response = await getClient().chat.complete({
     model: MODEL,
     messages: [
       { role: "user", content: prompt },
