@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { usePrivy, useLoginWithOAuth } from "@privy-io/react-auth";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles } from "lucide-react";
+
 
 const testimonials = [
   {
@@ -36,7 +36,7 @@ export default function LoginPage() {
   useEffect(() => {
     const interval = setInterval(() => {
       setTestimonialIdx((i) => (i + 1) % testimonials.length);
-    }, 4000);
+    }, 6000);
     return () => clearInterval(interval);
   }, []);
 
@@ -52,9 +52,11 @@ export default function LoginPage() {
       >
         {/* Logo */}
         <div className="flex flex-col items-center gap-3">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand/10 ring-1 ring-brand/20">
-            <Sparkles className="h-7 w-7 text-brand" />
-          </div>
+          <img
+            src="/tokker.png"
+            alt="Tokker"
+            className="h-24 w-24 rounded-full object-cover"
+          />
           <div>
             <h1 className="text-4xl font-extrabold tracking-tight text-white">
               Tokker
@@ -135,12 +137,17 @@ export default function LoginPage() {
         </div>
 
         {/* Social proof */}
-        <div className="flex items-center gap-4 text-xs text-muted">
-          <span>3,200+ creators</span>
-          <span className="h-3 w-px bg-white/10" />
-          <span>$2.4M in deals</span>
-          <span className="h-3 w-px bg-white/10" />
-          <span>500+ brands</span>
+        <div className="flex flex-col items-center gap-2 text-xs text-muted">
+          <div className="flex items-center gap-4">
+            <span>3,200+ creators</span>
+            <span className="h-3 w-px bg-white/10" />
+            <span>$2.4M in deals</span>
+            <span className="h-3 w-px bg-white/10" />
+            <span>500+ brands</span>
+          </div>
+          <p className="text-subtle">
+            Avg. creator lands their first deal within 48 hours
+          </p>
         </div>
       </motion.div>
     </div>

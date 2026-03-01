@@ -71,3 +71,25 @@ body {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* Ghost card — pre-pitch state (Step 2) */
+.ghost-card {
+  border-style: dashed;
+  opacity: 0.85;
+}
+.ghost-card:hover {
+  opacity: 1;
+  border-color: rgba(254, 44, 85, 0.2);
+}
+
+/* Activated card — post-pitch state (Step 4) */
+.activated-card {
+  box-shadow:
+    0 0 20px -4px rgba(0, 220, 130, 0.2),
+    0 0 6px -1px rgba(0, 220, 130, 0.1);
+}
+
+/* Bottom nav safe area for notched devices */
+.safe-area-bottom {
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+}

@@ -31,7 +31,8 @@
       "WebFetch(domain:docs.modash.io)",
       "WebFetch(domain:help.modash.io)",
       "Bash(set:*)",
-      "WebFetch(domain:elevenlabs.io)"
+      "WebFetch(domain:elevenlabs.io)",
+      "Bash(sips:*)"
     ]
   }
 }

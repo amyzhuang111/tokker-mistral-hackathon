@@ -22,6 +22,7 @@ Built for the [Mistral Worldwide Hackathon](https://mistral.ai/) — San Francis
 | Framework | Next.js 16 (App Router) |
 | Language | TypeScript |
 | AI | Mistral AI (`mistral-large-latest`) |
+| Voice | ElevenLabs Speech-to-Text (Scribe v1) |
 | Data Enrichment | Clay webhooks + Modash |
 | Auth | Privy (TikTok & Google OAuth) |
 | Payments | Stripe Privy (stablecoin wallet) |
@@ -48,6 +49,7 @@ Fill in your `.env.local`:
 
 ```env
 MISTRAL_API_KEY=           # Required — from console.mistral.ai
+ELEVENLABS_API_KEY=        # Required — from elevenlabs.io (Settings → API Keys)
 NEXT_PUBLIC_PRIVY_APP_ID=  # Required — from dashboard.privy.io
 PRIVY_APP_SECRET=          # Required — from dashboard.privy.io
 CLAY_WEBHOOK_URL=          # Optional — falls back to Mistral-powered brand discovery
@@ -74,7 +76,8 @@ src/
 │       ├── enrich/route.ts         # Trigger Clay/Modash enrichment
 │       ├── clay-callback/route.ts  # Receive Clay webhook data
 │       ├── agent/route.ts          # Mistral pitch strategy agent
-│       └── summarize/route.ts      # AI creator profile summary
+│       ├── summarize/route.ts      # AI creator profile summary
+│       └── transcribe/route.ts     # ElevenLabs voice-to-text
 ├── components/
 │   ├── CreatorInput.tsx            # Handle input + validation
 │   ├── CreatorProfileCard.tsx      # Profile card + AI summary + demographics
@@ -106,6 +109,10 @@ Creator enters handle
         │
         ▼
    Copy / Email ───────────► Send to brands
+
+* Voice input at step 4 is powered by ElevenLabs STT (Scribe v1).
+  The browser records audio via MediaRecorder, sends it to /api/transcribe,
+  which proxies to ElevenLabs for high-accuracy transcription.
 ```
 
 ## API Routes
@@ -117,6 +124,7 @@ Creator enters handle
 | `POST` | `/api/clay-callback` | Receive Clay webhook payload |
 | `POST` | `/api/agent` | Run Mistral pitch strategy agent |
 | `POST` | `/api/summarize` | Generate AI creator summary |
+| `POST` | `/api/transcribe` | Voice-to-text via ElevenLabs STT |
 
 ## License
 

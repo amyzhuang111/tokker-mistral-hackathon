@@ -19,7 +19,7 @@ Mistral is the brain. It runs as an agentic orchestrator using function calling 
 
 Clay is the data layer. It enriches brand/company profiles with signals that actually matter for creator partnerships: recent funding (= marketing budget), hiring for marketing/brand roles (= active in influencer spend), tech stack and industry vertical (= niche fit), company size and growth trajectory. Clay turns a brand name into an actionable profile the agent can reason over. Important integration note: Clay doesn't have a traditional REST API — it's table-based. The integration path is via webhooks: each Clay table has a unique webhook endpoint. The Mistral agent pushes brand/company names into a Clay table via webhook, Clay runs its enrichment columns (100+ data providers), and the enriched data is pulled back via HTTP action or a return webhook. For the hackathon, pre-configure a Clay table with the enrichment columns you need (company funding, headcount, job postings, tech stack) and expose it as a webhook the agent can hit. See Clay University: Using Clay as an API and HTTP API Integration for setup details.
 
-ElevenLabs is the output layer. Instead of generating yet another cold email, Tokker produces a short, personalized voice pitch in the creator's own voice (cloned with permission) or a professional narrator voice. Voice pitches have dramatically higher engagement than text — they feel personal, they're harder to ignore, and they differentiate the creator from every other DM in the brand manager's inbox.
+ElevenLabs is the voice layer. It serves two roles: (1) **Speech-to-Text** — creators can speak their campaign idea instead of typing, using ElevenLabs' Scribe v1 model for high-accuracy transcription via `/api/transcribe`. The browser records audio with MediaRecorder, sends the blob to the backend, which proxies to ElevenLabs STT. (2) **Voice pitches (future)** — instead of generating yet another cold email, Tokker could produce a short, personalized voice pitch in the creator's own voice (cloned with permission) or a professional narrator voice. Voice pitches have dramatically higher engagement than text — they feel personal, they're harder to ignore, and they differentiate the creator from every other DM in the brand manager's inbox.
 
 x402 (stablecoin payments) is the settlement layer. Once a brand accepts a deal, payment flows through the x402 protocol — an HTTP-native micropayment standard using USDC stablecoins. No invoicing, no net-30 terms, no payment processor skimming 10–20%. The agent can programmatically trigger and verify payments, making the entire pipeline autonomous from prospecting to payout. This is agentic commerce in its purest form: an AI agent that finds a deal, pitches it, and settles it — end to end.
 User Flow (Demo Narrative)
@@ -71,7 +71,8 @@ tokker/
 │   └── api/
 │       ├── agent/route.ts    # Mistral orchestrator — function calling loop
 │       ├── enrich/route.ts   # Clay webhook trigger + polling/callback handler
-│       ├── voice/route.ts    # ElevenLabs TTS generation
+│       ├── transcribe/route.ts # ElevenLabs STT (voice-to-text, implemented)
+│       ├── voice/route.ts    # ElevenLabs TTS generation (future)
 │       └── pay/route.ts      # x402 stablecoin settlement
 ├── lib/
 │   ├── mistral.ts            # Mistral client + tool definitions

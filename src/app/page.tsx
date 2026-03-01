@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import { motion } from "framer-motion";
-import { Sparkles, LogOut } from "lucide-react";
+import { LogOut } from "lucide-react";
 import CreatorInput from "@/components/CreatorInput";
 
 export default function Home() {
@@ -31,9 +31,11 @@ export default function Home() {
       {/* Header */}
       <div className="absolute left-0 right-0 top-0 flex items-center justify-between px-6 py-5">
         <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand/10">
-            <Sparkles className="h-4 w-4 text-brand" />
-          </div>
+          <img
+            src="/tokker.png"
+            alt="Tokker"
+            className="h-8 w-8 rounded-full"
+          />
           <span className="text-sm font-bold text-white">Tokker</span>
         </div>
         <button

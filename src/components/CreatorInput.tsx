@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { ArrowRight, Loader2 } from "lucide-react";
@@ -27,13 +27,13 @@ export default function CreatorInput({ defaultHandle }: { defaultHandle?: string
   const [statusText, setStatusText] = useState("");
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const formRef = useRef<HTMLFormElement>(null);
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function submitHandle(rawHandle: string) {
     setError(null);
     setStatusText("");
 
-    const cleaned = handle.trim().replace(/^@/, "");
+    const cleaned = rawHandle.trim().replace(/^@/, "");
     if (!cleaned) {
       setError("We couldn't find that handle — double check and try again.");
       return;
@@ -66,6 +66,8 @@ export default function CreatorInput({ defaultHandle }: { defaultHandle?: string
       sessionStorage.removeItem("tokker_summary");
       sessionStorage.removeItem("tokker_summary_handle");
       sessionStorage.removeItem("tokker_strategy");
+      sessionStorage.removeItem("tokker_selected_brands");
+      sessionStorage.removeItem("tokker_last_step");
       sessionStorage.setItem("tokker_enrichment", JSON.stringify(data));
       router.push("/dashboard");
     } catch (err) {
@@ -76,9 +78,14 @@ export default function CreatorInput({ defaultHandle }: { defaultHandle?: string
     }
   }
 
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    submitHandle(handle);
+  }
+
   return (
     <div className="flex w-full max-w-md flex-col gap-5">
-      <form onSubmit={handleSubmit}>
+      <form ref={formRef} onSubmit={handleSubmit}>
         <div className="relative flex items-center">
           <span className="absolute left-4 text-lg text-muted">@</span>
           <input
@@ -121,7 +128,7 @@ export default function CreatorInput({ defaultHandle }: { defaultHandle?: string
         or paste a TikTok profile link
       </p>
 
-      {/* Trending creators */}
+      {/* Trending creators — auto-submit on click */}
       <div className="flex flex-col items-center gap-2">
         <p className="text-xs text-muted">Trending on Tokker</p>
         <div className="flex flex-wrap justify-center gap-2">
@@ -129,8 +136,12 @@ export default function CreatorInput({ defaultHandle }: { defaultHandle?: string
             <button
               key={creator}
               type="button"
-              onClick={() => setHandle(creator)}
-              className="rounded-full border border-white/[0.06] bg-surface-1 px-3 py-1.5 text-xs text-white/70 transition hover:border-brand/30 hover:text-white"
+              disabled={loading}
+              onClick={() => {
+                setHandle(creator);
+                submitHandle(creator);
+              }}
+              className="rounded-full border border-white/[0.06] bg-surface-1 px-3 py-1.5 text-xs text-white/70 transition hover:border-brand/30 hover:text-white disabled:opacity-50"
             >
               {creator}
             </button>

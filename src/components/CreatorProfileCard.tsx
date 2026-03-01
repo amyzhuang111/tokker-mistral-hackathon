@@ -245,7 +245,42 @@ export default function CreatorProfileCard({
       {summaryError && (
         <div className="mb-4 flex items-center gap-2 rounded-xl bg-red-500/10 p-4">
           <Sparkles className="h-4 w-4 text-red-400" />
-          <p className="text-sm text-red-400">{summaryError}</p>
+          <p className="flex-1 text-sm text-red-400">{summaryError}</p>
+          <button
+            onClick={() => {
+              setSummaryError(null);
+              setSummaryLoading(true);
+              fetch("/api/summarize", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ creator }),
+              })
+                .then(async (res) => {
+                  if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.error || `Summarize failed (${res.status})`);
+                  }
+                  return res.json();
+                })
+                .then((data: CreatorSummary | null) => {
+                  if (data) {
+                    setSummary(data);
+                    sessionStorage.setItem("tokker_summary", JSON.stringify(data));
+                    sessionStorage.setItem("tokker_summary_handle", creator.handle);
+                    if (data.suggestedBrands?.length) {
+                      onBrandsDiscovered?.(data.suggestedBrands);
+                    }
+                  }
+                })
+                .catch((err) => {
+                  setSummaryError(err instanceof Error ? err.message : "Failed to generate summary");
+                })
+                .finally(() => setSummaryLoading(false));
+            }}
+            className="rounded-lg bg-red-500/20 px-3 py-1.5 text-xs font-medium text-red-400 transition hover:bg-red-500/30"
+          >
+            Retry
+          </button>
         </div>
       )}
 
@@ -306,6 +341,7 @@ export default function CreatorProfileCard({
             <button
               onClick={() => setShowAudience(!showAudience)}
               className="flex w-full items-center justify-between py-2 text-xs text-muted transition hover:text-white"
+              aria-expanded={showAudience}
             >
               <span>
                 {showAudience ? "Hide audience data" : "View audience demographics"}

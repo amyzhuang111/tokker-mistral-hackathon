@@ -25,7 +25,7 @@ Tokker's audience is **TikTok creators with 10K-1M followers**. These are digita
 | Enterprise data in brand cards | **Fixed** | Hidden behind "About this brand" expandable |
 | No progress indicator | **Fixed** | 4-step timed progress stepper during AI generation |
 | Infra stack in footer | **Fixed** | Replaced with social proof numbers |
-| Voice input no feedback | **Fixed** | Animated 5-bar waveform visualization |
+| Voice input no feedback | **Fixed** | Animated 5-bar waveform + ElevenLabs STT transcription |
 | No empty/success/celebration states | **Fixed** | Confetti on pitch generation, empty state for no brands |
 | Login page barren | **Fixed** | Testimonial carousel, social proof, gradient mesh |
 | Copy button no feedback | **Fixed** | "Copied!" state + toast notification |
@@ -265,6 +265,7 @@ Not:
 - 4-step timed progress indicator during pitch generation
 - Branded spinner (coral ring) for page loads
 - Animated waveform (5 bars) during voice recording
+- "Transcribing your recording..." spinner after voice recording stops (ElevenLabs STT)
 
 ### 6.3 Micro-interactions
 - "Copied!" feedback with green check icon + sonner toast

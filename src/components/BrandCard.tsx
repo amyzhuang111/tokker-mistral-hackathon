@@ -11,6 +11,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { toast } from "sonner";
+import { estimateValue } from "@/lib/estimateValue";
 
 export interface Brand {
   name: string;
@@ -38,9 +39,12 @@ export interface BrandStrategy {
 interface BrandCardProps {
   brand: Brand;
   strategy?: BrandStrategy;
+  variant?: "ghost" | "activated";
   index?: number;
   selected?: boolean;
   onToggle?: () => void;
+  estimatedRange?: string;
+  followerCount?: string;
 }
 
 function ScoreRing({ score }: { score: number }) {
@@ -90,13 +94,25 @@ function ScoreRing({ score }: { score: number }) {
 export default function BrandCard({
   brand,
   strategy,
+  variant,
   index = 0,
   selected,
   onToggle,
+  estimatedRange,
+  followerCount,
 }: BrandCardProps) {
   const [expanded, setExpanded] = useState(false);
   const [showPitch, setShowPitch] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  const isGhost = variant === "ghost";
+  const isActivated = variant === "activated";
+
+  // Pre-pitch estimated range for ghost cards
+  const displayRange =
+    estimatedRange ?? (isGhost && followerCount
+      ? estimateValue(brand.fitScore, followerCount)
+      : null);
 
   function handleCopy() {
     if (!strategy) return;
@@ -119,10 +135,14 @@ export default function BrandCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: index * 0.08 }}
       className={`group rounded-2xl border bg-surface-1 p-5 transition ${
-        selected
-          ? "border-brand/40 shadow-[0_0_16px_-4px_rgba(254,44,85,0.3)]"
-          : "border-white/[0.06] hover:border-brand/30"
-      } ${selected === false ? "opacity-60" : ""}`}
+        isActivated
+          ? "activated-card border-success/40"
+          : selected
+            ? "border-brand/40 shadow-[0_0_16px_-4px_rgba(254,44,85,0.3)]"
+            : isGhost
+              ? "ghost-card border-white/[0.04]"
+              : "border-white/[0.06] hover:border-brand/30"
+      } ${selected === false && !isActivated ? "opacity-60" : ""}`}
     >
       {/* Header row: favicon + name + score ring + checkbox */}
       <div className="mb-3 flex items-center gap-3">
@@ -144,14 +164,14 @@ export default function BrandCard({
         {onToggle && (
           <button
             onClick={onToggle}
-            className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border transition ${
+            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border transition ${
               selected
                 ? "border-brand bg-brand text-white"
                 : "border-white/20 bg-transparent text-transparent hover:border-white/40"
             }`}
             aria-label={selected ? "Deselect brand" : "Select brand"}
           >
-            {selected && <Check className="h-3.5 w-3.5" />}
+            {selected && <Check className="h-4 w-4" />}
           </button>
         )}
       </div>
@@ -161,12 +181,12 @@ export default function BrandCard({
         {brand.fitReason}
       </p>
 
-      {/* Deal value + content formats (only if selected and strategy exists) */}
+      {/* Deal value — hero treatment */}
       {selected !== false && strategy && (
         <div className="mb-3 space-y-2">
           <div className="flex items-baseline gap-2">
             <span className="text-xs text-muted">What you could earn</span>
-            <span className="text-sm font-bold text-success">
+            <span className="text-2xl font-extrabold text-success">
               {strategy.estimatedValue}
             </span>
           </div>
@@ -183,10 +203,21 @@ export default function BrandCard({
         </div>
       )}
 
+      {/* Pre-pitch estimated range for ghost cards */}
+      {!strategy && displayRange && selected !== false && (
+        <div className="mb-3 flex items-baseline gap-2">
+          <span className="text-xs text-muted">Est. deal value</span>
+          <span className="text-lg font-bold text-white/40">
+            {displayRange}
+          </span>
+        </div>
+      )}
+
       {/* Expandable details */}
       <button
         onClick={() => setExpanded(!expanded)}
         className="flex w-full items-center justify-between py-2 text-xs text-muted transition hover:text-white"
+        aria-expanded={expanded}
       >
         <span>{expanded ? "Less details" : "About this brand"}</span>
         {expanded ? (
@@ -260,6 +291,7 @@ export default function BrandCard({
           <button
             onClick={() => setShowPitch(!showPitch)}
             className="w-full rounded-xl bg-brand/10 py-2.5 text-sm font-semibold text-brand transition hover:bg-brand/15"
+            aria-expanded={showPitch}
           >
             {showPitch ? "Hide pitch" : "View full pitch"}
           </button>

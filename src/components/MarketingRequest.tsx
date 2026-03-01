@@ -8,20 +8,29 @@ import { toast } from "sonner";
 interface MarketingRequestProps {
   onSubmit: (request: string) => void;
   loading: boolean;
+  promptText?: string;
+  onPromptChange?: (text: string) => void;
+  hideSubmitButton?: boolean;
 }
 
 const progressSteps = [
-  "Analyzing your profile...",
-  "Matching brands to your niche...",
-  "Crafting personalized pitches...",
-  "Finalizing your strategy...",
+  "Reading your creator profile...",
+  "Researching each brand...",
+  "Writing personalized pitches...",
+  "Polishing your strategy...",
 ];
 
 export default function MarketingRequest({
   onSubmit,
   loading,
+  promptText,
+  onPromptChange,
+  hideSubmitButton,
 }: MarketingRequestProps) {
-  const [text, setText] = useState("");
+  const [internalText, setInternalText] = useState("");
+  const text = promptText ?? internalText;
+  const setText = onPromptChange ?? setInternalText;
+
   const [listening, setListening] = useState(false);
   const [transcribing, setTranscribing] = useState(false);
   const [progressStep, setProgressStep] = useState(0);
@@ -83,7 +92,7 @@ export default function MarketingRequest({
 
           const { text: transcribed } = await res.json();
           if (transcribed) {
-            setText((prev) => (prev ? prev + " " + transcribed : transcribed));
+            setText(text ? text + " " + transcribed : transcribed);
           }
         } catch {
           toast.error("Voice transcription failed — please try again");
@@ -104,7 +113,7 @@ export default function MarketingRequest({
     } catch {
       toast.error("Microphone access denied");
     }
-  }, [listening]);
+  }, [listening, text, setText]);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -228,7 +237,7 @@ export default function MarketingRequest({
             </div>
           ))}
         </div>
-      ) : (
+      ) : !hideSubmitButton ? (
         <button
           type="submit"
           disabled={!text.trim() || transcribing}
@@ -237,7 +246,7 @@ export default function MarketingRequest({
           <Wand2 className="h-4 w-4" />
           Write my pitches
         </button>
-      )}
+      ) : null}
     </form>
   );
 }
