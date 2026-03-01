@@ -35,7 +35,11 @@
       "Bash(cd \"/mnt/c/Users/win/OneDrive/Desktop/Coding Projects/Tokker/tokker-mistral-hackathon\" && npm install @privy-io/react-auth framer-motion lucide-react canvas-confetti sonner 2>&1)",
       "Bash(python3:*)",
       "Bash(node:*)",
-      "Bash(npm test:*)"
+      "Bash(npm test:*)",
+      "Bash(cd \"/mnt/c/Users/win/OneDrive/Desktop/Coding Projects/Tokker/tokker-mistral-hackathon\" && git add src/app/api/clay-callback/route.ts && git rebase --continue --no-edit 2>&1)",
+      "Bash(cd \"/mnt/c/Users/win/OneDrive/Desktop/Coding Projects/Tokker/tokker-mistral-hackathon\" && GIT_EDITOR=true git rebase --continue 2>&1)",
+      "Bash(cd \"/mnt/c/Users/win/OneDrive/Desktop/Coding Projects/Tokker/tokker-mistral-hackathon\" && git add src/app/api/clay-callback/route.ts && GIT_EDITOR=true git rebase --continue 2>&122)",
+      "Bash(cd \"/mnt/c/Users/win/OneDrive/Desktop/Coding Projects/Tokker/tokker-mistral-hackathon\" && git add -A && GIT_EDITOR=true git rebase --continue 2>&1)"
     ]
   }
 }

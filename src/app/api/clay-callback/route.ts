@@ -96,3 +96,8 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
+// GET endpoint for easy health check
+export async function GET() {
+  return NextResponse.json({ ok: true, message: "clay-callback alive" });
+}
