@@ -2,11 +2,14 @@
 
 **AI PR Agent for TikTok Creators** — Land brand deals on autopilot.
 
+![Cover Image](docs/cover.png)
+
 A creator inputs their TikTok handle, and Tokker uses Clay and Modash to enrich their audience profile with demographics, engagement rates, and content themes. Tokker then uses the Mistral API to summarize the creator's profile, suggest high-fit brand deals, and draft personalized outreach emails for each one. Tokker also creates a stablecoin wallet via Stripe Privy for creator payouts.
 
 Built for the [Mistral Worldwide Hackathon](https://mistral.ai/) — San Francisco, Feb 28 - Mar 1, 2025.
 
 ## How It Works
+![Architecture Diagram](docs/arch_diagram.png)
 
 1. **Log in** via TikTok or Google OAuth (Privy)
 2. **Enter your TikTok handle** — Tokker enriches your profile using Clay + Modash (followers, engagement rate, audience demographics, top content themes)
