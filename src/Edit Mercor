@@ -1,0 +1,2138 @@
+# Trace — Enterprise AI Engagement Simulator
+
+## Final Product Pass for Mercor Enterprise AI Associate Interview
+
+Please review the **entire existing Trace codebase**, the current product implementation, and `mercor_signal_CLAUDE_REVISED.md`, then implement a final product pass.
+
+This project is being built as an **add-on project for an interview with Mercor's Enterprise AI team for the Enterprise AI Associate role**.
+
+The project should therefore intentionally demonstrate the capabilities described in the role:
+
+* supporting end-to-end enterprise AI engagements,
+* joining customer discovery and synthesizing organizational pain points,
+* identifying specific workflows where AI can create value,
+* translating qualitative feedback and edge cases into structured execution plans,
+* working between customers and engineering,
+* structuring ambiguous problems,
+* tracking workstreams and blockers,
+* converting customer needs into agent capabilities,
+* defining how an AI system should be evaluated,
+* making go / no-go deployment recommendations,
+* communicating clearly to technical and non-technical stakeholders,
+* building reusable frameworks and processes.
+
+However:
+
+**Do not turn the product UI into a job application.**
+
+Trace itself should look like a credible internal product used by an Enterprise AI team during a Fortune 500 engagement.
+
+Mercor/job-interview framing should live primarily in:
+
+* the README,
+* project description,
+* demo narrative,
+* architecture rationale,
+* documentation.
+
+The in-product customer experience should remain realistic and product-native.
+
+---
+
+# 1. PROJECT POSITIONING
+
+## Project
+
+# Trace
+
+**Enterprise AI Engagement Diagnostic**
+
+> Turn messy enterprise knowledge into a prioritized AI workflow, deployable agent specification, evaluation system, pilot decision, and continuous improvement loop.
+
+Trace simulates the operating layer between a senior enterprise customer and a production AI deployment.
+
+The product should demonstrate the work of an Enterprise AI Associate operating at the intersection of:
+
+* customer engagement,
+* product,
+* engineering,
+* GTM,
+* strategy,
+* operations,
+* AI deployment.
+
+This is **not primarily an agent builder**.
+
+This is **not primarily an eval dashboard**.
+
+This is **not primarily a consulting deck**.
+
+This is a system for managing the translation from:
+
+**What the customer says**
+↓
+**How the work actually happens**
+↓
+**Where AI creates value**
+↓
+**What the agent must do**
+↓
+**How good work is defined**
+↓
+**Whether the system is ready to deploy**
+↓
+**How failures improve the system**
+
+---
+
+# 2. WHY THIS PROJECT FITS THE ENTERPRISE AI ASSOCIATE ROLE
+
+The finished project should implicitly demonstrate five major abilities.
+
+## 1. Customer Engagement
+
+Can I enter an ambiguous enterprise environment, interview domain experts, understand their priorities, and identify what actually matters?
+
+Trace demonstrates this through:
+
+* expert interviews,
+* discovery notes,
+* workflow extraction,
+* tacit knowledge,
+* pain points,
+* constraints,
+* context gaps,
+* open questions.
+
+## 2. Structured Problem Solving
+
+Can I take messy qualitative information and convert it into an actionable engagement?
+
+Trace demonstrates this through:
+
+* workflow decomposition,
+* opportunity scoring,
+* prioritization,
+* decision criteria,
+* blockers,
+* workstreams,
+* pilot readiness.
+
+## 3. Customer → Engineering Translation
+
+Can I translate something a customer says into something an engineering team can actually build?
+
+Trace demonstrates:
+
+**Customer evidence**
+→ **Requirement**
+→ **Agent rule**
+→ **Tool / context behavior**
+→ **Verifier**
+→ **Eval case**
+
+This should be one of the strongest parts of the product.
+
+## 4. Enterprise AI Judgment
+
+Do I understand that production AI requires more than a good model demo?
+
+Trace demonstrates:
+
+* bounded autonomy,
+* context design,
+* permission boundaries,
+* human approval,
+* evals,
+* adversarial cases,
+* blocking requirements,
+* quality / cost / latency trade-offs,
+* continuous improvement.
+
+## 5. Engagement Delivery
+
+Can I move a project from discovery through a deployment decision?
+
+Trace demonstrates:
+
+* engagement stages,
+* owners,
+* blockers,
+* current recommendation,
+* next actions,
+* pilot scope,
+* ROI,
+* executive readout.
+
+---
+
+# 3. CUSTOMER ENGAGEMENT
+
+Keep the current demo.
+
+## Client
+
+**Meridian Systems**
+
+## Selected Workflow
+
+**Executive Account Brief Preparation**
+
+## Agent
+
+**Executive Account Brief Agent**
+
+## Current Engagement Stage
+
+**Evaluation Design**
+
+## Current Recommendation
+
+**Conditional No-Go**
+
+The agent is promising, but the current committed configuration is not yet ready for a bounded pilot.
+
+---
+
+# 4. CUSTOMER PROBLEM
+
+Meridian's Strategic Account team prepares executive account briefs before important customer meetings.
+
+Today this requires senior account managers to manually synthesize information from:
+
+* Salesforce,
+* Zendesk,
+* Product Analytics,
+* Google Drive,
+* meeting notes,
+* account history,
+* stakeholder knowledge.
+
+The obvious problem is preparation time.
+
+But the deeper enterprise AI problem is:
+
+> The information exists, but the judgment required to interpret it is distributed across experienced employees and is rarely written down.
+
+Senior account managers know things such as:
+
+* when declining usage is actually dangerous,
+* when seasonality makes a decline irrelevant,
+* when implementation status changes the interpretation,
+* which support incidents deserve executive attention,
+* whether duplicate tickets represent one issue or several,
+* which meeting comments matter more than CRM fields,
+* which expansion opportunities are actually credible,
+* when conflicting systems should be surfaced instead of reconciled automatically.
+
+Trace should demonstrate how this tacit expertise becomes explicit agent behavior.
+
+---
+
+# 5. CORE PRODUCT JOURNEY
+
+Keep the current navigation:
+
+**Overview**
+
+**Discovery**
+
+**Context Graph**
+
+**Opportunity**
+
+**Agent Spec**
+
+**Eval Suite**
+
+**Experiments**
+
+**Pilot**
+
+**Failures**
+
+**Executive Readout**
+
+Conceptually, these pages should represent:
+
+**Discover**
+→ **Structure**
+→ **Prioritize**
+→ **Specify**
+→ **Evaluate**
+→ **Experiment**
+→ **Decide**
+→ **Improve**
+
+The entire product should feel like **one enterprise engagement**, not ten unrelated dashboard pages.
+
+---
+
+# 6. OVERVIEW = ENGAGEMENT COMMAND CENTER
+
+The Overview should allow an Enterprise AI operator to understand the engagement in under 30 seconds.
+
+Show:
+
+### Expert Interviews
+
+5 completed
+
+### Workflow Steps
+
+10 mapped
+
+### Context Gaps
+
+4 open
+
+### Eval Cases
+
+24
+
+### Committed Eval Score
+
+82%
+
+### Quality Threshold
+
+85%
+
+### Pilot Blockers
+
+3
+
+Rename:
+
+**Agent Score**
+
+to:
+
+**Committed Eval Score**
+
+because the number represents a specific evaluated configuration, not some universal measure of the agent.
+
+---
+
+# 7. CURRENT RECOMMENDATION
+
+Keep the recommendation extremely operational.
+
+Example:
+
+### Not Yet Pilot-Ready
+
+**Strong**
+
+* Source grounding is reliable.
+* Required output structure is consistent.
+* Workflow has high business value.
+* Human review boundary is clear.
+
+**Needs Work**
+
+* Strategic prioritization remains inconsistent.
+* Contradiction handling fails on adversarial cases.
+* Critical support issues can still be omitted.
+
+**Next Decision**
+
+Validate the new candidate configuration on the full eval suite after the three blocking issues are addressed.
+
+Avoid vague AI copy.
+
+---
+
+# 8. ENGAGEMENT STAGE
+
+Use a simple engagement lifecycle:
+
+**Discover**
+→ **Specify**
+→ **Evaluate**
+→ **Pilot**
+→ **Improve**
+
+Current:
+
+**Evaluate**
+
+This is useful because it demonstrates that the associate understands where the engagement currently sits and what must happen next.
+
+---
+
+# 9. CORE FLOW
+
+Keep a lightweight workflow on the Overview:
+
+**Interview an expert**
+→
+**Extract tacit knowledge**
+→
+**Map workflow + systems**
+→
+**Identify AI opportunities**
+→
+**Generate agent requirements**
+→
+**Convert quality standards into evals**
+→
+**Benchmark configurations**
+→
+**Decide pilot readiness**
+→
+**Learn from failures**
+
+This is the operating process Trace represents.
+
+---
+
+# 10. DISCOVERY = CLIENT MEETING → STRUCTURED ENGAGEMENT INPUT
+
+This page is especially important for the Enterprise AI Associate role.
+
+Mercor expects the associate to join customer conversations, document pain points, synthesize priorities, and identify workflows.
+
+Discovery should show exactly that capability.
+
+Keep the raw interview transcript.
+
+For each interview extract:
+
+### Objectives
+
+What outcome does the stakeholder want?
+
+### Pain Points
+
+Where does the workflow fail?
+
+### Workflow Steps
+
+What does the person actually do?
+
+### Systems Used
+
+What tools/data sources are involved?
+
+### Signals
+
+What information changes their decision?
+
+### Decision Rules
+
+What rules guide the expert?
+
+### Exceptions
+
+When does the normal rule break?
+
+### Judgment Calls
+
+What requires experience rather than lookup?
+
+### Constraints
+
+What may the agent not do?
+
+### Metrics
+
+How is success currently measured?
+
+### Edge Cases
+
+Where would a naive AI system fail?
+
+### Open Questions
+
+What still needs to be clarified with the client?
+
+Do NOT make this generic transcript summarization.
+
+The product should visibly convert:
+
+**messy customer conversation → structured execution input**
+
+---
+
+# 11. EXPERT INTERVIEWS SHOULD FEEL LIKE REAL CUSTOMER DISCOVERY
+
+Preserve the existing stakeholder mix.
+
+For example:
+
+* VP Customer Success
+* Senior Strategic Account Manager
+* Enterprise CSM
+* Support Operations Lead
+* Revenue Operations Lead
+
+Different stakeholders should hold different pieces of the truth.
+
+That matters.
+
+The agent's specification should not simply be derived from one person's opinion.
+
+Trace should help reconcile:
+
+* different definitions,
+* conflicting priorities,
+* system ownership,
+* domain expertise.
+
+This demonstrates stakeholder management and structured synthesis.
+
+---
+
+# 12. TACIT KNOWLEDGE IS THE KEY ASSET
+
+Create or strengthen a visible concept of:
+
+# What Experts Know That Systems Don't
+
+Examples:
+
+### Usage decline is contextual
+
+A 15% decline can be irrelevant for a seasonal customer.
+
+A smaller decline may be serious during rollout.
+
+### Ticket volume is a weak signal
+
+Unresolved severity and repeated issue themes matter more than raw count.
+
+### Meeting notes may dominate structured CRM data
+
+A customer comment in the latest executive meeting may materially change the account narrative.
+
+### Contradictions should be surfaced
+
+If systems disagree, the agent should not invent certainty.
+
+### Executive briefs are prioritization problems
+
+The executive does not need twenty facts.
+
+They need:
+
+* what matters,
+* why it matters,
+* what to do next.
+
+This is central to the project.
+
+---
+
+# 13. CONTEXT GRAPH = ORGANIZATIONAL KNOWLEDGE MAP
+
+The Context Graph should show how people, systems, and business objects combine to create the context available to the agent.
+
+It should answer:
+
+> What can the agent actually know?
+
+Represent:
+
+## People
+
+Examples:
+
+* Account Manager
+* CSM
+* Support Lead
+* RevOps
+* Executive Sponsor
+
+## Systems
+
+Examples:
+
+* Salesforce
+* Zendesk
+* Product Analytics
+* Google Drive
+* Meeting Notes Repository
+
+## Business Objects
+
+Examples:
+
+* Account
+* Contract
+* Opportunity
+* Support Incident
+* Product Usage
+* Meeting
+* Action Item
+
+---
+
+# 14. CONTEXT GRAPH INSPECTION
+
+When clicking a system/node show:
+
+* information available,
+* owner,
+* freshness,
+* reliability,
+* source-of-truth status,
+* access scope,
+* known gaps.
+
+Freshness should be particularly visible.
+
+Distinguish:
+
+* missing,
+* stale,
+* contradictory,
+* incomplete,
+* access restricted,
+* unreliable.
+
+Do not treat every context problem as simply "missing data."
+
+---
+
+# 15. CONTEXT GAPS SHOULD BE FIRST-CLASS ENGAGEMENT OBJECTS
+
+Each gap should have:
+
+* gap,
+* evidence,
+* severity,
+* owner,
+* impact on agent,
+* required resolution,
+* status.
+
+Example:
+
+### Account-health definitions conflict
+
+**Issue**
+
+Sales and Customer Success use different definitions of account health.
+
+**Impact**
+
+The agent must not state one blended health score without attribution.
+
+**Owner**
+
+VP Customer Success
+
+**Resolution**
+
+Agree on canonical definition OR require the agent to show both scores and their sources.
+
+This makes the product feel like real engagement delivery.
+
+---
+
+# 16. OPPORTUNITY ASSESSMENT = WHERE SHOULD AI ACTUALLY BE DEPLOYED?
+
+Do not make the workflow feel predetermined.
+
+Show approximately 4–5 plausible opportunities.
+
+For example:
+
+1. Executive Account Brief Agent
+2. Renewal Risk Intelligence Agent
+3. Expansion Opportunity Agent
+4. Support Escalation Intelligence Agent
+5. Customer Meeting Follow-Up Agent
+
+Rank them.
+
+---
+
+# 17. OPPORTUNITY SCORING
+
+Use dimensions such as:
+
+* Business Value
+* AI Suitability
+* Data Readiness
+* Execution Feasibility
+* Evaluation Readiness
+* Deployment Safety
+* Time to Value
+
+All dimensions should mean:
+
+**higher = better**
+
+Replace:
+
+**Risk (5 = low risk)**
+
+with:
+
+**Deployment Safety**
+
+For each score allow the user to inspect:
+
+**Why this score?**
+
+The rationale matters more than the number.
+
+---
+
+# 18. WHY EXECUTIVE ACCOUNT BRIEF PREPARATION WINS
+
+Make the argument concise and strong.
+
+This workflow has:
+
+* high repetition,
+* significant senior-employee time,
+* tacit judgment,
+* strong existing data footprint,
+* measurable current baseline,
+* reversible output,
+* existing human review,
+* low action autonomy,
+* clear output format,
+* offline evaluability,
+* short time to value.
+
+Therefore recommend:
+
+# Bounded Agent + Human Approval
+
+The agent drafts.
+
+A senior human approves.
+
+This should demonstrate judgment rather than a desire to automate everything.
+
+---
+
+# 19. ROI SHOULD BEGIN AT OPPORTUNITY SELECTION
+
+The associate role requires identifying where Mercor can drive value.
+
+Opportunity evaluation should therefore include:
+
+### Current measured baseline
+
+For example:
+
+* 160 briefs/month
+* 2.5 hours/brief
+* loaded labor cost
+
+### Projected impact
+
+For example:
+
+* 60–65% reduction in preparation time
+
+### Estimated economics
+
+* current annual labor cost
+* projected annual labor cost
+* projected savings
+* expected inference cost
+* estimated implementation cost
+* year-one value
+* payback
+
+Clearly label modeled values as:
+
+**Projected**
+
+or:
+
+**Pilot hypothesis**
+
+Do not imply projected savings have already occurred.
+
+---
+
+# 20. AGENT SPEC = CUSTOMER FEEDBACK → ENGINEERING EXECUTION
+
+This is one of the most important pages for role fit.
+
+The associate is expected to translate client feedback and edge cases into structured execution plans and work with engineering.
+
+Make this transformation explicit.
+
+Example:
+
+### Client Evidence
+
+> "If the systems disagree, I want the brief to show the disagreement rather than silently choosing one."
+
+↓
+
+### Product Requirement
+
+**Contradiction Detection**
+
+↓
+
+### Agent Behavior
+
+* retrieve both sources,
+* identify inconsistency,
+* preserve source attribution,
+* reduce confidence,
+* escalate contradiction,
+* do not invent reconciliation.
+
+↓
+
+### Verifier
+
+**Contradiction Handling**
+
+↓
+
+### Eval Cases
+
+Conflicting CRM / meeting-note scenarios.
+
+That is exactly the customer → product → engineering translation this project should demonstrate.
+
+---
+
+# 21. AGENT SPEC STRUCTURE
+
+Keep:
+
+## Objective
+
+## Trigger
+
+## Users
+
+## Environment
+
+## Inputs
+
+## Required Output
+
+## Allowed Actions
+
+## Prohibited Actions
+
+## Human Approval Gate
+
+## Escalation Rules
+
+## Version History
+
+## Evidence-Linked Rules
+
+Also strengthen:
+
+# Agent Architecture
+
+---
+
+# 22. AGENT ARCHITECTURE
+
+Represent the actual system, not merely a prompt.
+
+## Trigger
+
+Examples:
+
+* user requests brief for named account,
+* scheduled executive meeting.
+
+## Context / Integrations
+
+* Salesforce
+* Zendesk
+* Product Analytics
+* Google Drive
+* Meeting Notes Repository
+
+## Skills
+
+* account-context retrieval
+* usage analysis
+* support-risk analysis
+* expansion-signal analysis
+* contradiction detection
+* evidence grounding
+* strategic prioritization
+* executive summarization
+
+## Tools
+
+Show what data/tools each skill may access.
+
+## Optional Subagents
+
+Only use subagents if they improve the architecture.
+
+Possible bounded specialists:
+
+* Usage Analyst
+* Support Risk Analyst
+* Expansion Signal Analyst
+
+Do not add multi-agent complexity simply to sound sophisticated.
+
+Architecture should follow the problem.
+
+---
+
+# 23. AGENT AUTHORITY MUST BE EXPLICIT
+
+Allowed:
+
+* retrieve approved information,
+* reconcile sources where rules exist,
+* calculate trends,
+* summarize,
+* rank risks,
+* rank opportunities,
+* draft brief.
+
+Prohibited:
+
+* modify Salesforce,
+* contact customers,
+* close support tickets,
+* change account health,
+* create opportunities,
+* state unsupported facts.
+
+Human approval:
+
+> A human must approve every brief before it reaches an executive.
+
+The product should demonstrate bounded deployment rather than uncontrolled autonomy.
+
+---
+
+# 24. VERSION HISTORY SHOULD SHOW CUSTOMER/FAILURE FEEDBACK
+
+Versions should not just say:
+
+"v4 newer than v3."
+
+Explain WHY.
+
+Example:
+
+### v4
+
+Added executive-escalation and expansion-corroboration rules after failure review.
+
+### v3
+
+Added sponsor-change and implementation-context exceptions following observed evaluation failures.
+
+### v2
+
+Added contradiction-handling and support-severity requirements after stakeholder interviews.
+
+This demonstrates product iteration driven by evidence.
+
+---
+
+# 25. EVALS = CUSTOMER QUALITY STANDARDS MADE EXECUTABLE
+
+The role requires enough AI fluency to understand how systems work and why they matter.
+
+The Eval Suite should demonstrate this clearly without looking like an ML research dashboard.
+
+Core thesis:
+
+> An enterprise agent is not fully specified until the customer's definition of good work can be measured.
+
+Each verifier should include:
+
+* requirement,
+* description,
+* source evidence,
+* weight,
+* type,
+* blocking status,
+* threshold.
+
+---
+
+# 26. VERIFIERS
+
+Preserve a set similar to:
+
+### Source Grounding
+
+Every material claim has traceable evidence.
+
+### Strategic Prioritization
+
+The brief selects the most decision-relevant signals rather than summarizing everything.
+
+### Critical Support Risk
+
+Relevant high-severity unresolved support issues cannot be omitted.
+
+### Contradiction Handling
+
+Conflicting systems must be surfaced.
+
+### Executive Concision
+
+Output is short and prioritizes what matters.
+
+### Actionability
+
+Recommendations are specific and evidence-linked.
+
+### Tool Efficiency
+
+The agent retrieves what it needs without unnecessary calls.
+
+### Format Compliance
+
+The required executive structure is present.
+
+Ensure weights sum to 100%.
+
+---
+
+# 27. VERIFIER TYPES
+
+Clearly show types.
+
+### Deterministic
+
+Examples:
+
+* source present,
+* section present,
+* required field included,
+* prohibited action absent.
+
+### LLM Judge
+
+Examples:
+
+* strategic prioritization,
+* actionability,
+* concision.
+
+### Agent / Trajectory
+
+Examples:
+
+* correct tools consulted,
+* contradictions surfaced,
+* required information retrieved before synthesis.
+
+Keep the explanation accessible to a non-engineering enterprise stakeholder.
+
+---
+
+# 28. EVAL COVERAGE
+
+Maintain the current approximately 24-case suite.
+
+Coverage should be explicit across:
+
+## Standard
+
+Typical customer/account scenarios.
+
+## Edge
+
+Unusual but legitimate cases.
+
+## Adversarial
+
+Cases deliberately constructed to break naive reasoning.
+
+Also cover data conditions:
+
+* complete,
+* missing,
+* stale,
+* contradictory.
+
+This should show that the associate understands why a polished demo is not the same as a deployable system.
+
+---
+
+# 29. P0 — CANONICAL ENGAGEMENT DATA
+
+This is one of the highest priority engineering changes.
+
+Create or strengthen one shared typed source of truth for:
+
+* engagement
+* stakeholders
+* interviews
+* extracted knowledge
+* context nodes
+* context gaps
+* opportunities
+* selected workflow
+* agent spec
+* agent versions
+* eval suite
+* verifiers
+* configurations
+* eval runs
+* failures
+* blockers
+* ROI
+* pilot readiness
+* executive recommendation.
+
+Do not hardcode slightly different numbers on individual screens.
+
+---
+
+# 30. CANONICAL CURRENT EVALUATION STATE
+
+Use consistently:
+
+## Current committed configuration
+
+**Configuration B — Frontier Model B · Prompt v4**
+
+## Full benchmark
+
+**24 cases**
+
+## Committed score
+
+**82%**
+
+## Pilot threshold
+
+**85%**
+
+## Pilot blockers
+
+**3**
+
+## Decision
+
+**Conditional No-Go**
+
+---
+
+# 31. FIX CONFIGURATION B VS CONFIGURATION C
+
+This is currently ambiguous.
+
+Fix it completely.
+
+## Configuration B
+
+Label:
+
+**Committed**
+
+Meaning:
+
+* full 24-case suite completed,
+* current accepted benchmark,
+* score = 82%,
+* currently below release bar.
+
+## Configuration C
+
+Label:
+
+**Candidate — Pending Full Benchmark**
+
+Meaning:
+
+* promising experimental configuration,
+* clears the 85% bar on its current run,
+* lower per-task cost,
+* has NOT replaced B,
+* must complete the full current eval suite before becoming committed.
+
+Never imply that C already makes the agent pilot-ready.
+
+---
+
+# 32. EXPERIMENT RUNNER = QUALITY × COST × LATENCY
+
+The experiment page should answer:
+
+> What is the lowest-cost configuration that reliably satisfies Meridian's quality requirements?
+
+Not:
+
+> Which model is the smartest?
+
+For every configuration show:
+
+* committed / candidate / rejected,
+* model,
+* prompt version,
+* agent-spec version,
+* reasoning mode,
+* enabled tools,
+* eval-suite version,
+* cases evaluated,
+* score,
+* blocking verifier results,
+* cost/task,
+* latency,
+* date.
+
+Make partial/screening runs visibly different from full benchmark runs.
+
+---
+
+# 33. EXPERIMENTS SHOULD NOT ONLY BE MODEL SWAPS
+
+Show that configurations may differ by:
+
+* model,
+* prompt,
+* reasoning level,
+* context strategy,
+* retrieval strategy,
+* tool configuration,
+* spec version.
+
+This demonstrates broader enterprise AI understanding.
+
+Do not build unnecessary complexity.
+
+---
+
+# 34. PILOT RELEASE RULE
+
+Do NOT use:
+
+`score >= 85`
+
+Use:
+
+# Pilot Ready =
+
+**Overall score ≥85%**
+AND
+**all blocking verifiers pass**
+AND
+**no unresolved pilot blocker remains**
+
+A high aggregate score cannot compensate for a serious enterprise failure.
+
+Example:
+
+If the agent scores 90% but still occasionally omits a P1 support incident, the system remains blocked.
+
+Make this logic visible.
+
+---
+
+# 35. CANONICAL THREE BLOCKERS
+
+Create shared blocker objects.
+
+Use the same three underlying blockers on:
+
+* Overview
+* Pilot
+* Failures
+* Executive Readout
+
+### Blocker 1 — Contradiction Handling
+
+Conflicting-evidence cases remain unreliable.
+
+### Blocker 2 — Critical Support Risk
+
+High-severity unresolved support issues can still be omitted.
+
+### Blocker 3 — Adversarial Coverage
+
+Severity-taxonomy conflict coverage is insufficient for deployment confidence.
+
+Each blocker should connect to:
+
+* owner,
+* verifier,
+* failure,
+* remediation,
+* status.
+
+---
+
+# 36. PILOT PAGE = ENGAGEMENT DELIVERY
+
+The Enterprise AI Associate role emphasizes scoping workstreams, tracking milestones, and coordinating stakeholders.
+
+The Pilot page should visibly demonstrate this.
+
+Do NOT turn it into a generic project-management product.
+
+Show the pieces specifically necessary to reach deployment.
+
+---
+
+# 37. PILOT RECOMMENDATION
+
+At the top:
+
+# Conditional No-Go
+
+Then show:
+
+**Current Score:** 82%
+
+**Required:** 85%
+
+**Blocking Issues:** 3
+
+**Candidate:** Configuration C pending full benchmark
+
+Then:
+
+## Required Actions
+
+For example:
+
+1. Add five adversarial contradiction cases.
+2. Move Critical Support Risk to a hard pre-summary check.
+3. Expand severity-taxonomy adversarial coverage.
+4. Rerun Configuration C on all 24 cases.
+5. Verify every blocking requirement passes.
+6. Commit the successful configuration.
+7. Begin bounded pilot.
+
+These should feel like concrete engagement next steps.
+
+---
+
+# 38. PILOT WORKSTREAMS
+
+Show workstreams such as:
+
+### Customer / Workflow
+
+* confirm target workflow,
+* confirm owner,
+* baseline current process.
+
+### Data / Context
+
+* confirm required systems,
+* validate access,
+* resolve freshness gaps.
+
+### Agent
+
+* update spec,
+* implement required behaviors.
+
+### Evaluation
+
+* complete coverage,
+* run benchmark,
+* resolve blockers.
+
+### Security / Governance
+
+* confirm scoped access,
+* confirm human approval,
+* confirm audit requirements.
+
+### Pilot
+
+* select cohort,
+* deploy bounded workflow,
+* track results.
+
+Each workstream can have:
+
+* owner,
+* status,
+* next milestone,
+* blocker.
+
+This is directly relevant to engagement-delivery work.
+
+---
+
+# 39. PILOT SUCCESS METRICS
+
+Separate:
+
+## Business
+
+* preparation time,
+* throughput,
+* review time.
+
+## Agent Quality
+
+* overall eval score,
+* grounding,
+* prioritization,
+* contradiction handling,
+* critical omission rate.
+
+## Human Trust
+
+* acceptance rate,
+* edit rate,
+* override rate,
+* manager correction rate.
+
+## Operational
+
+* latency,
+* cost/task,
+* tool failures.
+
+## Safety
+
+* unsupported claims,
+* critical omissions,
+* approval violations.
+
+A pilot succeeds only if:
+
+**the business improves AND quality remains acceptable.**
+
+---
+
+# 40. FAILURE ANALYSIS = CUSTOMER FEEDBACK LOOP
+
+This is one of the strongest pages.
+
+Preserve:
+
+**Production / Eval Failure**
+→
+**Expert Review**
+→
+**Root Cause**
+→
+**Context / Spec / Verifier Update**
+→
+**Regression Test**
+→
+**Rerun**
+
+Each failure should contain:
+
+* observed behavior,
+* expected behavior,
+* business consequence,
+* root cause,
+* expert correction,
+* remediation,
+* changed artifact,
+* regression case,
+* linked verifier,
+* status.
+
+---
+
+# 41. FAILURES SHOULD CREATE PRODUCT REQUIREMENTS
+
+This page should visibly demonstrate the Enterprise AI Associate responsibility of translating qualitative feedback and edge cases into new agent capabilities.
+
+For example:
+
+### Failure
+
+Seasonal usage dip flagged as churn risk.
+
+### Expert Correction
+
+Check known seasonality before interpreting usage decline.
+
+### Root Cause
+
+Missing decision rule/context.
+
+### Product Change
+
+Add account-seasonality context and pre-risk validation rule.
+
+### Evaluation Change
+
+Create regression eval for seasonal accounts.
+
+This is exactly the type of customer-to-engineering translation the role requires.
+
+---
+
+# 42. CONTINUOUS IMPROVEMENT
+
+Resolved failures do not disappear.
+
+They become:
+
+* agent rules,
+* context requirements,
+* new verifiers,
+* regression tests,
+* institutional knowledge.
+
+The app should communicate that production AI is a continuous learning process.
+
+---
+
+# 43. EXECUTIVE READOUT = CUSTOMER-FACING COMMUNICATION
+
+This page demonstrates the communication part of the Enterprise AI Associate role.
+
+It should answer:
+
+### Recommendation
+
+Should Meridian proceed?
+
+### Why This Workflow
+
+Why did we choose this use case?
+
+### Current Performance
+
+How good is the current system?
+
+### Key Risks
+
+What prevents deployment?
+
+### Economics
+
+Why is this worth doing?
+
+### Pilot Design
+
+What are we proposing?
+
+### Required Decisions
+
+What do we need from the client?
+
+### Next Steps
+
+What happens now?
+
+Keep this executive-ready.
+
+---
+
+# 44. REMOVE META JOB-APPLICATION LANGUAGE FROM THE UI
+
+The product itself should NOT say things such as:
+
+* "Mercor-style engagement"
+* "portfolio project"
+* "interview project"
+* "this demonstrates..."
+* "Enterprise AI Associate"
+
+The fake client should experience Trace as a normal enterprise product.
+
+However, the README SHOULD explain that the project was created to explore the operating problems faced in enterprise AI deployment.
+
+---
+
+# 45. README POSITIONING
+
+Update the README so the reason for building Trace is clear.
+
+Suggested framing:
+
+# Trace — Enterprise AI Engagement Simulator
+
+> Trace explores the operating layer between enterprise expertise and production AI: discovering how work actually happens, identifying high-value workflows, translating expert judgment into agent requirements, defining customer-specific evaluation criteria, benchmarking candidate configurations, and making an evidence-backed deployment decision.
+
+Then explain:
+
+## Why I Built It
+
+Enterprise AI deployment is not simply a model-selection problem.
+
+The difficult work often sits between:
+
+* customer conversations,
+* undocumented domain expertise,
+* product requirements,
+* engineering implementation,
+* evaluation,
+* operational rollout.
+
+I built Trace to model that translation layer end-to-end.
+
+It is designed around the type of work performed by enterprise AI teams that sit between senior customers and AI deployment.
+
+Do not make the README sound like a cover letter.
+
+---
+
+# 46. OPTIONAL README SECTION — ROLE MAPPING
+
+Because this project is specifically being shared during an Enterprise AI Associate interview, add a concise section near the end of the README:
+
+# What Trace Demonstrates
+
+### Customer Discovery
+
+Turns stakeholder interviews into structured workflow knowledge.
+
+### Structured Problem Solving
+
+Ranks candidate AI opportunities using explicit decision criteria.
+
+### Product Translation
+
+Converts customer feedback into agent requirements and engineering behavior.
+
+### AI Evaluation
+
+Defines business-specific verifiers, test coverage, and release gates.
+
+### Engagement Delivery
+
+Tracks blockers, owners, workstreams, and pilot readiness.
+
+### Commercial Judgment
+
+Connects deployment decisions to measurable ROI.
+
+### Executive Communication
+
+Produces a concise customer-facing recommendation.
+
+Do not mention resume keywords or say "why I am qualified."
+
+Let the project speak for itself.
+
+---
+
+# 47. ROI
+
+Keep ROI auditable.
+
+Distinguish:
+
+## Measured baseline
+
+from:
+
+## Assumptions
+
+from:
+
+## Projected pilot impact
+
+Example assumptions:
+
+* 160 briefs/month,
+* 2.5 hours/brief,
+* $95 blended loaded rate,
+* projected 65% time reduction.
+
+Calculate:
+
+* current annual labor cost,
+* projected annual cost,
+* gross savings,
+* inference cost,
+* implementation cost,
+* net year-one savings,
+* projected payback.
+
+Never present projections as realized results.
+
+---
+
+# 48. GTM / OFFERING THINKING
+
+The Enterprise AI Associate role also involves supporting GTM messaging and refining offerings based on customer interactions.
+
+Do NOT add a GTM page.
+
+Instead, let the product structure itself demonstrate a reusable engagement methodology.
+
+For example, Trace effectively creates reusable templates for:
+
+* discovery,
+* context mapping,
+* opportunity assessment,
+* agent specification,
+* evaluation design,
+* pilot readiness,
+* failure review,
+* executive readout.
+
+This should feel like an engagement playbook that could scale across customers.
+
+If appropriate, reflect this in the README.
+
+---
+
+# 49. PLAYBOOK / PROCESS IMPROVEMENT
+
+The job description emphasizes building internal playbooks, templates, and frameworks.
+
+Trace itself should feel like that playbook turned into software.
+
+Use consistent templates across:
+
+* interviews,
+* requirements,
+* context gaps,
+* verifiers,
+* failures,
+* blockers,
+* pilot workstreams.
+
+Avoid bespoke, one-off structures where a reusable schema would be better.
+
+---
+
+# 50. AI FLUENCY WITHOUT OVERENGINEERING
+
+The project should show understanding of:
+
+* context,
+* tools,
+* agents,
+* model selection,
+* prompt iteration,
+* evals,
+* trajectory evaluation,
+* human approval,
+* failures,
+* security,
+* latency,
+* inference cost.
+
+But the Enterprise AI Associate is not an ML engineer role.
+
+The product should therefore prioritize:
+
+**judgment + translation + delivery**
+
+over technical complexity.
+
+Do not add architecture simply because it looks advanced.
+
+---
+
+# 51. PRODUCT DESIGN
+
+Preserve the current visual identity.
+
+The app should feel:
+
+* enterprise,
+* serious,
+* analytical,
+* high trust,
+* fast,
+* information dense,
+* operator oriented.
+
+Keep:
+
+* dark sidebar,
+* white/neutral workspace,
+* restrained blue,
+* compact cards,
+* small typography,
+* tables,
+* subtle borders,
+* status chips,
+* functional charts.
+
+Avoid:
+
+* marketing hero sections,
+* gradients,
+* animated AI graphics,
+* excessive sparkle icons,
+* huge whitespace,
+* consumer SaaS styling.
+
+---
+
+# 52. COPY STYLE
+
+Write like an enterprise operator.
+
+Prefer:
+
+> Contradiction Handling passes 7/10 conflicting-evidence cases; threshold is 10/10.
+
+instead of:
+
+> The model struggles somewhat with conflicting information.
+
+Prefer:
+
+> Two unresolved P1 incidents were omitted from executive summaries.
+
+instead of:
+
+> Support risk requires further improvement.
+
+Prefer:
+
+> Candidate configuration has not completed the full 24-case suite.
+
+instead of:
+
+> Further testing is recommended.
+
+Be concrete.
+
+---
+
+# 53. DO NOT COPY MERCOR
+
+This project is specifically for a Mercor interview, but Trace should remain its own project.
+
+Do not:
+
+* use Mercor's logo,
+* mimic their website visually,
+* claim affiliation,
+* present Trace as a Mercor product,
+* copy their marketing text verbatim.
+
+What SHOULD feel similar is the underlying operating understanding:
+
+* capture expert knowledge,
+* understand workflows,
+* identify AI opportunities,
+* translate expertise into agents,
+* evaluate against customer-specific quality criteria,
+* deploy carefully,
+* learn from failures.
+
+---
+
+# 54. P0 IMPLEMENTATION PRIORITIES
+
+Complete these first:
+
+1. Create one canonical engagement state.
+2. Fix all metric inconsistencies.
+3. Fix Configuration B vs Configuration C semantics.
+4. Implement correct pilot-readiness logic.
+5. Canonicalize the three blockers.
+6. Make Executive Readout derive from shared state.
+7. Remove meta portfolio/Mercor references from customer-facing UI.
+8. Make evidence lineage work coherently across pages.
+
+---
+
+# 55. P1 PRIORITIES
+
+Then improve:
+
+9. Discovery/tacit-knowledge extraction.
+10. Context Graph operational usefulness.
+11. Candidate-opportunity comparison.
+12. Customer evidence → product requirement translation.
+13. Agent architecture clarity.
+14. Verifier provenance.
+15. Experiment metadata.
+16. Failure → remediation → regression lineage.
+17. Engagement workstreams.
+18. ROI labeling.
+19. README / project explanation.
+
+---
+
+# 56. BEFORE EDITING
+
+Inspect the full codebase first.
+
+Identify:
+
+* routes,
+* existing components,
+* data models,
+* seed data,
+* state management,
+* scoring logic,
+* ROI calculations,
+* eval-run logic,
+* blocker logic,
+* localStorage behavior,
+* hardcoded values,
+* duplicated strings.
+
+Do NOT immediately start rewriting components.
+
+First determine what should become canonical shared data.
+
+---
+
+# 57. CROSS-PAGE CONSISTENCY QA
+
+Search for:
+
+* `82`
+* `85`
+* `24`
+* configuration names,
+* verifier scores,
+* blocker descriptions,
+* ROI assumptions.
+
+Ensure pages derive from shared state.
+
+Specifically verify:
+
+### Overview
+
+agrees with Pilot.
+
+### Pilot
+
+agrees with Failures.
+
+### Failures
+
+agree with verifier results.
+
+### Experiments
+
+agree with committed/candidate state.
+
+### Executive Readout
+
+agrees with everything else.
+
+---
+
+# 58. PRODUCT QA
+
+Check every page as if presenting it live in an interview.
+
+Ask:
+
+### Overview
+
+Can I explain the engagement in 20 seconds?
+
+### Discovery
+
+Can I show how messy customer feedback becomes structured knowledge?
+
+### Context Graph
+
+Can I explain what the agent knows and where its gaps are?
+
+### Opportunity
+
+Can I defend why this workflow was selected?
+
+### Agent Spec
+
+Can I show how customer feedback became engineering requirements?
+
+### Eval Suite
+
+Can I explain how "good" was defined?
+
+### Experiments
+
+Can I explain the quality/cost/latency tradeoff?
+
+### Pilot
+
+Can I defend the Go / No-Go recommendation?
+
+### Failures
+
+Can I show how edge cases improve the system?
+
+### Executive Readout
+
+Can I summarize the entire engagement to an executive?
+
+If any page cannot answer its question clearly, improve it.
+
+---
+
+# 59. THE MOST IMPORTANT DEMO PATH
+
+The strongest path through Trace should be:
+
+**Marcus says something in an interview**
+
+↓
+
+**Trace extracts a tacit decision rule**
+
+↓
+
+**The rule appears in the Agent Specification**
+
+↓
+
+**The customer expectation becomes a verifier**
+
+↓
+
+**An eval exposes a failure**
+
+↓
+
+**An expert explains why the behavior is wrong**
+
+↓
+
+**The spec/context/verifier changes**
+
+↓
+
+**A regression test is created**
+
+↓
+
+**A new candidate configuration is benchmarked**
+
+↓
+
+**Trace makes a defensible deployment recommendation**
+
+This single path should demonstrate:
+
+* customer engagement,
+* structured thinking,
+* AI fluency,
+* product judgment,
+* engineering translation,
+* operational execution.
+
+Prioritize making this flow excellent.
+
+---
+
+# 60. FINAL DEMO STANDARD
+
+The product should make the interviewer infer:
+
+### High-Agency Operator
+
+Can take an undefined enterprise AI problem and create structure around it.
+
+### Structured Thinker
+
+Can transform messy inputs into hypotheses, requirements, metrics, and decisions.
+
+### Customer-Facing
+
+Can listen to experts and preserve what actually matters.
+
+### Product-Minded
+
+Can translate customer pain into engineering requirements.
+
+### Delivery-Oriented
+
+Can manage blockers and move the engagement toward deployment.
+
+### AI-Literate
+
+Understands agents, context, tools, evals, model tradeoffs, failure modes, and human boundaries.
+
+### Commercial
+
+Can connect technical deployment to meaningful business value.
+
+### Clear Communicator
+
+Can produce both engineering-ready requirements and executive-ready recommendations.
+
+The final reaction should be:
+
+> This person understands what an Enterprise AI Associate actually does.
+
+But that sentence should NOT appear in the product UI.
+
+---
+
+# 61. TECHNICAL QA
+
+After implementation run:
+
+```bash
+npm run lint
+```
+
+and:
+
+```bash
+npm run build
+```
+
+Fix everything that fails.
+
+Also manually check:
+
+* every route,
+* console errors,
+* hydration,
+* localStorage,
+* scrolling,
+* overflow,
+* charts,
+* tabs,
+* buttons,
+* graph interactions,
+* Markdown export.
+
+Do not claim completion until these are verified.
+
+---
+
+# 62. FINAL RESPONSE TO ME
+
+Do not stop after planning.
+
+Implement the edits.
+
+When finished, return:
+
+## Files Changed
+
+## Product Changes
+
+## Logic / Data Architecture Changes
+
+## Cross-Page Consistency Fixes
+
+## Enterprise AI Associate Role Alignment
+
+Map the project briefly to:
+
+* customer discovery,
+* problem structuring,
+* product/engineering translation,
+* engagement delivery,
+* AI evaluation,
+* executive communication.
+
+## Remaining Recommendations
+
+Only include genuinely valuable remaining improvements.
+
+The final version should not feel like "a candidate built a dashboard."
+
+It should feel like:
+
+> **a lightweight2 operating system for an enterprise AI engagement, built by someone who understands the work.**
+2
